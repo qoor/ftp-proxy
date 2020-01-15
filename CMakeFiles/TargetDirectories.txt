@@ -1,5 +1,0 @@
-/root/projects/test-proxy/CMakeFiles/rebuild_cache.dir
-/root/projects/test-proxy/CMakeFiles/edit_cache.dir
-/root/projects/test-proxy/test-proxy/CMakeFiles/rebuild_cache.dir
-/root/projects/test-proxy/test-proxy/CMakeFiles/edit_cache.dir
-/root/projects/test-proxy/test-proxy/CMakeFiles/test-proxy.dir

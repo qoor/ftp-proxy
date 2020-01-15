@@ -1,1 +1,0 @@
-/usr/bin/cc  -std=c90   CMakeFiles/test-proxy.dir/main.c.o CMakeFiles/test-proxy.dir/option.c.o CMakeFiles/test-proxy.dir/server.c.o CMakeFiles/test-proxy.dir/global_variables.c.o  -o test-proxy 
