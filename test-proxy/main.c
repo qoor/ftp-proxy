@@ -2,12 +2,18 @@
 
 int main(int argc, char** argv)
 {
-	int i;
+	int i = 0;
 
+	if (!get_argument(argc, argv))
+	{
+		/*실패 값받았으니 LOG 기록하면됨*/
+	}
 	if (!get_option(argc, argv))
 	{
 		return 0;
 	}
+
+	/*메인 로직 작성*/
 
 /*
 프로그램이 종료될 때 실행되어야 하는 코드

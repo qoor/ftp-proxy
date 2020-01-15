@@ -7,6 +7,9 @@
 #include <memory.h>
 #include <assert.h>
 #include <malloc.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #include "server.h"
 #include "option.h"
