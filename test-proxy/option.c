@@ -2,6 +2,15 @@
 
 #define MAX_CONFIG_KEY_LENGTH 32
 
+/*
+모든 종류의 옵션을 가져옴
+
+옵션 종류:
+파일
+Argument
+
+추후 Argument에서 옵션을 가져오는 get_option_from_argument 함수 추가해야 함
+*/
 int get_option(int argc, char** argv)
 {
 	char filename[128] = "proxy.cfg";
@@ -14,6 +23,7 @@ int get_option(int argc, char** argv)
 	return 1;
 }
 
+/* 파일에서 옵션을 가져옴 */
 int get_option_from_file(const char* filename)
 {
 	FILE* file = fopen(filename, "r");
@@ -56,6 +66,7 @@ int get_option_from_file(const char* filename)
 	}
 }
 
+/* 문자열에서 공백 건너뜀 */
 void skip_whitespace(char** data)
 {
 	assert(data);

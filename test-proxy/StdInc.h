@@ -11,5 +11,6 @@
 #include "server.h"
 #include "option.h"
 #include "main.h"
+#include "global_variables.h"
 
 #endif
