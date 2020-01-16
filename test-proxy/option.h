@@ -14,5 +14,5 @@ void skip_whitespace(char** data);
 
 void show_config_key_invalid(const char* key, const char* correct_parent_key);
 
-int create_setting_file();
+int create_option_file();
 #endif
