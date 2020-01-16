@@ -62,7 +62,7 @@ int get_option_from_argument(int argc, const char** argv) /* - getopt() 함수�
 }
 
 /* 옵션 파일 생성 */
-int create_setting_file()
+int create_option_file()
 {
 	FILE* fp = NULL;
 	/* 추후 설정 파일 디렉터리 생성시 사용
