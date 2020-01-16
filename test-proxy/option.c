@@ -41,15 +41,16 @@ int get_option_from_argument(int argc, const char** argv) /* - getopt() 함수�
 			}
 			return 0;
 		}
-		else if (strcmp(argv[option], "-h") == 0 || (strcmp(argv[option], "--help") == 0))
-		{
-			print_help(argv[0]);
-			return 0;
-		}
 		else if (strcmp(argv[option], "-c") == 0 && argv[option + 1] == NULL) /*-c 인수 뒤 argument가 없을시*/
 		{
 			fprintf(stderr, "option -c requires an argument.\n");
 			return -1;
+		}
+
+		if (strcmp(argv[option], "-h") == 0 || (strcmp(argv[option], "--help") == 0)) /*help 파서*/
+		{
+			print_help(argv[0]);
+			return 0;
 		}
 		else
 		{
@@ -57,7 +58,7 @@ int get_option_from_argument(int argc, const char** argv) /* - getopt() 함수�
 			return -1;
 		}
 	}
-	return 0;
+	return 1;
 }
 
 /* 옵션 파일 생성 */
