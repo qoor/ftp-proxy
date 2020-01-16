@@ -44,8 +44,8 @@ clean:
 int print_help(const char* argv)
 {
 	printf("---------- Help ----------\n");
-	printf("Usage: %s \n", argv[0]);
-	printf("debugging: %s -c debugging [Developer Only]n", argv[0]);
-	printf("Help: %s -h \n", argv[0]);
+	printf("Usage: %s \n", argv);
+	printf("debugging: %s -c debugging [Developer Only]n", argv);
+	printf("Help: %s -h \n", argv);
 	return 0;
 }
