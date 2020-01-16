@@ -8,11 +8,13 @@ struct option
 
 struct option proxy_option;
 
-int get_option_from_argument(int argc, const char**argv);
+int get_options(int argc, const char** argv);
+int get_option_from_argument(int argc, const char** argv);
 int get_option_from_file();
 void skip_whitespace(char** data);
 
-void show_config_key_invalid(const char* key, const char* correct_parent_key);
-
 int create_option_file();
+
+int keycmp(const char* target, const char* original_key);
+
 #endif

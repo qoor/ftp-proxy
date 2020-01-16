@@ -1,6 +1,6 @@
 #include "StdInc.h"
 
-/* server_list 전역 변수에 서버를 추가함 */
+/* Insert server connection data to server_list */
 void add_server(const char* connection_string)
 {
 	char* port_start_pos;
@@ -9,7 +9,7 @@ void add_server(const char* connection_string)
 	server_list = (struct server**)realloc(server_list, sizeof(struct server*) * server_count + 1);
 	server_list[server_count] = (struct server*)malloc(sizeof(struct server));
 
-	if ((port_start_pos = strchr(connection_string, ':'))) /* 콜론을 발견한 경우 (콜론 앞: IP, 콜론 뒤: Port) */
+	if ((port_start_pos = strchr(connection_string, ':'))) /* If founded colon (Colon prev: IP, Colon next: Port) */
 	{
 		address_len = (size_t)(connection_string - port_start_pos);
 

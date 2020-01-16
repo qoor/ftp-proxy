@@ -1,23 +1,44 @@
 #include "StdInc.h"
 
-#define filename "proxy.cfg"
+#define OPTION_FILE_NAME "proxy.cfg"
 #define MAX_CONFIG_KEY_LENGTH 32
 
 /*
-모든 종류의 옵션을 가져옴
-
-옵션 종류:
-파일
-Argument :
--h & --help : 도움말 출력
--c [command] : 커맨드 실행
-
-Command : 
-debugging : 추후 디버깅용 함수 추가 [Developer Only]
-
+ * Get all of types of option from arguments
+ * Options:
+ *	File,
+ *	Argument:
+ *		-h or --help: Print help
+ *		-c [command]: Execute command
+ *			Command : 
+ *				debugging: Used to debugging [Developer Only]
 */
 
-int get_option_from_argument(int argc, const char** argv) /* - getopt() 함수를 사용하면 좋겠지만 C89는 미지원이라 이렇게 짰음*/
+int get_options(int argc, const char** argv)
+{
+	if (get_option_from_argument(argc, argv) != 1)
+	{
+		return 0;
+	}
+
+	if (!get_option_from_file())
+	{
+		return 0;
+	}
+
+	return 1;
+}
+
+/*
+ * Get options from arguments
+ * C90 does not support getopt() then require this function
+ *
+ * Return values
+ * -1: fail
+ *  0: success
+ *  1: No sub argument
+*/
+int get_option_from_argument(int argc, const char** argv)
 {
 	int option = 0;
 	if (argc > 3)
@@ -25,13 +46,13 @@ int get_option_from_argument(int argc, const char** argv) /* - getopt() 함수�
 		fprintf(stderr, "Usage: %s -c [command] \n", argv[0]);
 		return -1;
 	}
-	for (option = 1; option < argc; ++option) /*들어온 인수갯수 만큼 검사 argv[0]은 기본이니 1부터 시작*/
+	for (option = 1; option < argc; ++option) /* argv[0] is file name */
 	{
-		if (strcmp(argv[option], "-c") == 0 && argv[option + 1] != NULL) /*-C Command 파서*/
+		if (strcmp(argv[option], "-c") == 0 && argv[option + 1] != NULL) /* Command parser */
 		{
-			if (strcmp(argv[option + 1], "debugging") == 0) /*setting 커맨드 처리*/
+			if (strcmp(argv[option + 1], "debugging") == 0) /* Proccessing `setting` command */
 			{
-				/* 추후 디버깅 함수 추가 바람*/
+				/* Functions for debugging */
 				return 0;
 			}
 			else
@@ -41,13 +62,13 @@ int get_option_from_argument(int argc, const char** argv) /* - getopt() 함수�
 			}
 			return 0;
 		}
-		else if (strcmp(argv[option], "-c") == 0 && argv[option + 1] == NULL) /*-c 인수 뒤 argument가 없을시*/
+		else if (strcmp(argv[option], "-c") == 0 && argv[option + 1] == NULL) /* If argument does not have after -c argument */
 		{
 			fprintf(stderr, "option -c requires an argument.\n");
 			return -1;
 		}
 
-		if (strcmp(argv[option], "-h") == 0 || (strcmp(argv[option], "--help") == 0)) /*help 파서*/
+		if (strcmp(argv[option], "-h") == 0 || (strcmp(argv[option], "--help") == 0)) /* `help` parser*/
 		{
 			print_help(argv[0]);
 			return 0;
@@ -61,35 +82,31 @@ int get_option_from_argument(int argc, const char** argv) /* - getopt() 함수�
 	return 1;
 }
 
-/* 옵션 파일 생성 */
+/* Create option file if option file is not exists */
 int create_option_file()
 {
 	FILE* fp = NULL;
-	/* 추후 설정 파일 디렉터리 생성시 사용
-	struct stat st = { 0 };
-	if (stat("/etc/test", &st) == -1)
-	{
-		mkdir("/etc/test", 0744);
-	}
-	*/
+	
 	if ((fp = fopen("proxy.cfg", "w")) == NULL)
 	{
 		fprintf(stderr, "proxy.cfg ERROR\n");
 	}
-	printf("파일을 만들었지비 \n");
+
+	printf("Option file create success \n");
 	fclose(fp);
 	return 0;
 }
 
-/* 파일에서 옵션을 가져옴 */
+/* Get options from file (OPTION_FILE_NAME) */
 int get_option_from_file()
 {
-	FILE* file = fopen(filename, "r");
+	FILE* file = fopen(OPTION_FILE_NAME, "r");
 	char data[4096];
 	char* current_pos;
 	char config_key[MAX_CONFIG_KEY_LENGTH];
 	int key_len;
 	int option_mode = 0;
+	int ret = 1;
 
 	if (!file)
 	{
@@ -112,7 +129,7 @@ int get_option_from_file()
 
 		config_key[key_len] = '\0';
 
-		if (strncmp(config_key, "server_address", 7) == 0)
+		if (keycmp(config_key, "server_address") == 0)
 		{
 			skip_whitespace(&current_pos);
 			add_server(current_pos);
@@ -120,14 +137,17 @@ int get_option_from_file()
 		else
 		{
 			printf("Config key '%s' is not valid.", config_key);
-			fclose(file);
-			return 0;
+			
+			ret = 0;
+			break;
 		}
 	}
+
 	fclose(file);
+	return ret;
 }
 
-/* 문자열에서 공백 건너뜀 */
+/* Skipping whitespace of C string pointer */
 void skip_whitespace(char** data)
 {
 	assert(data);
@@ -136,5 +156,11 @@ void skip_whitespace(char** data)
 	{
 		++(*data);
 	}
+}
+
+/* Compare target string as same as original key?  */
+int keycmp(const char* target, const char* original_key)
+{
+	return strncmp(target, original_key, strlen(original_key));
 }
 
