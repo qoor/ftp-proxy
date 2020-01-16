@@ -4,7 +4,7 @@ int main(int argc, const char** argv)
 {
 	int i;
 
-	if (!get_options())
+	if (!get_options(argc, argv))
 	{
 		return 0;
 	}
