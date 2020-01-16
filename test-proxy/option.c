@@ -110,7 +110,10 @@ int get_option_from_file()
 
 	if (!file)
 	{
-		fclose(file);
+		/* 
+		 * Do not pass NULL file pointer to fclose.
+		 * It cause Segmentation fault
+		*/
 		return 0;
 	}
 
