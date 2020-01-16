@@ -93,6 +93,7 @@ int get_option_from_file()
 
 	if (!file)
 	{
+		fclose(file);
 		return 0;
 	}
 
@@ -105,8 +106,8 @@ int get_option_from_file()
 
 		while (*current_pos > ' ')
 		{
-			++current_pos;
 			config_key[key_len++] = *current_pos;
+			++current_pos;
 		}
 
 		config_key[key_len] = '\0';
@@ -119,9 +120,11 @@ int get_option_from_file()
 		else
 		{
 			printf("Config key '%s' is not valid.", config_key);
+			fclose(file);
 			return 0;
 		}
 	}
+	fclose(file);
 }
 
 /* 문자열에서 공백 건너뜀 */
