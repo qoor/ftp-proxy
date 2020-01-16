@@ -1,17 +1,26 @@
 #include "StdInc.h"
 
-int main(int argc, char** argv)
+int main(int argc, const char** argv)
 {
 	int i = 0;
 
-	if (!get_argument(argc, argv))
-	{
-		/*실패 값받았으니 LOG 기록하면됨*/
-	}
-	if (!get_option(argc, argv))
+	if (get_option_from_argument(argc, argv) == -1) /*함수 반환 값-1 실패 0 성공*/
 	{
 		return 0;
 	}
+	else
+	{
+		if(!get_option_from_file())
+		{
+			printf("파일을 못읽었지비\n");
+			return 0;
+		}
+		else
+		{
+			printf("파일을 읽었지비\n");
+		}
+	}
+
 
 	/*메인 로직 작성*/
 

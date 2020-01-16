@@ -8,9 +8,9 @@ struct option
 
 struct option proxy_option;
 
-int get_argument(int argc, char**argv);
-int get_option(int argc, char** argv);
-int get_option_from_file(const char* filename);
+int get_option_from_argument(int argc, const char**argv);
+
+int get_option_from_file();
 
 void skip_whitespace(char** data);
 

@@ -1,5 +1,6 @@
 #include "StdInc.h"
 
+#define filename "proxy.cfg"
 #define MAX_CONFIG_KEY_LENGTH 32
 
 /*
@@ -12,11 +13,11 @@ Argument :
 -c [command] : 커맨드 실행
 
 Command : 
-setting : 설정 파일 부분
+debugging : 추후 디버깅용 함수 추가 [Developer Only]
 
 */
 
-int get_argument(int argc, char** argv) /* - getopt() 함수를 사용하면 좋겠지만 C89는 미지원이라 이렇게 짰음*/
+int get_option_from_argument(int argc, const char** argv) /* - getopt() 함수를 사용하면 좋겠지만 C89는 미지원이라 이렇게 짰음*/
 {
 	int option = 0;
 	if (argc > 3)
@@ -28,10 +29,10 @@ int get_argument(int argc, char** argv) /* - getopt() 함수를 사용하면 좋
 	{
 		if (strcmp(argv[option], "-c") == 0 && argv[option + 1] != NULL) /*-C Command 파서*/
 		{
-			if (strcmp(argv[option + 1], "setting") == 0) /*setting 커맨드 처리*/
+			if (strcmp(argv[option + 1], "debugging") == 0) /*setting 커맨드 처리*/
 			{
-				print_setting();
-				return 1;
+				/* 추후 디버깅 함수 추가 바람*/
+				return 0;
 			}
 			else
 			{
@@ -63,34 +64,12 @@ int print_help(const char* argv)
 {
 	printf("---------- Help ----------\n");
 	printf("Usage: %s \n", argv);
-	printf("Setting: %s -c setting \n", argv);
+	printf("debugging: %s -c debugging [Developer Only]n", argv);
 	printf("Help: %s -h \n", argv);
 	return 0;
 }
 
-int print_setting()
-{
-	int input_value = 0;
-	printf("---------- Setting ----------\n");
-	printf("1. Server Registration. \n");
-	printf("2. Bind Setting. \n\n");
 
-	printf("Enter a choice number : ");
-	scanf("%d", &input_value);
-	switch (input_value)
-	{
-	case 1:
-		server_registration();
-		break;
-	case 2:
-		bind_setting();
-		break;
-	default:
-		fprintf(stderr, "Invalid choice number. \n");
-		break;
-	}
-	return 0;
-}
 
 int server_registration()
 {
@@ -111,25 +90,11 @@ int server_registration()
 	return 0;
 }
 
-int bind_setting()
-{
-	return 0;
-}
 
-int get_option(int argc, char** argv)
-{
-	char filename[128] = "proxy.cfg";
 
-	if (!get_option_from_file(filename))
-	{
-		return 0;
-	}
-
-	return 1;
-}
 
 /* 파일에서 옵션을 가져옴 */
-int get_option_from_file(const char* filename)
+int get_option_from_file()
 {
 	FILE* file = fopen(filename, "r");
 	char data[4096];
