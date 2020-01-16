@@ -24,6 +24,7 @@ int main(int argc, const char** argv)
 
 	/*메인 로직 작성*/
 
+
 /*
 프로그램이 종료될 때 실행되어야 하는 코드
 
@@ -36,5 +37,15 @@ clean:
 	}
 
 	free(server_list);
+	return 0;
+}
+
+/* 프로그램 도움말 출력 */
+int print_help(const char* argv)
+{
+	printf("---------- Help ----------\n");
+	printf("Usage: %s \n", argv[0]);
+	printf("debugging: %s -c debugging [Developer Only]n", argv[0]);
+	printf("Help: %s -h \n", argv[0]);
 	return 0;
 }

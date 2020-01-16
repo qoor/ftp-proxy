@@ -60,18 +60,8 @@ int get_option_from_argument(int argc, const char** argv) /* - getopt() 함수�
 	return 0;
 }
 
-int print_help(const char* argv)
-{
-	printf("---------- Help ----------\n");
-	printf("Usage: %s \n", argv);
-	printf("debugging: %s -c debugging [Developer Only]n", argv);
-	printf("Help: %s -h \n", argv);
-	return 0;
-}
-
-
-
-int server_registration()
+/* 옵션 파일 생성 */
+int create_setting_file()
 {
 	FILE* fp = NULL;
 	/* 추후 설정 파일 디렉터리 생성시 사용
@@ -89,9 +79,6 @@ int server_registration()
 	fclose(fp);
 	return 0;
 }
-
-
-
 
 /* 파일에서 옵션을 가져옴 */
 int get_option_from_file()
