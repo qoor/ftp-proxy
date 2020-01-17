@@ -23,7 +23,7 @@ void add_server(const char* connection_string)
 	++server_count;
 }
 
-void reset_server_list()
+void reset_server_list(void)
 {
 	int i;
 	

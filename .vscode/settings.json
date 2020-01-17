@@ -1,7 +1,8 @@
 {
     "files.associations": {
-        "time.h": "c"
-	},
+        "time.h": "c",
+        "stdinc.h": "c"
+    },
     "C_Cpp.default.cStandard": "c89",
     "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"
 }

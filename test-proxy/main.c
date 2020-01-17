@@ -5,12 +5,12 @@ int main(int argc, const char** argv)
 	int i;
 
 	/* Initializing */
-	if (!log_init())
+	if (log_init() != LOG_INIT_SUCCESS)
 	{
 		return 0;
 	}
 
-	if (!get_options(argc, argv))
+	if (get_options(argc, argv) != OPTION_GET_SUCCESS)
 	{
 		log_free();
 		return 0;

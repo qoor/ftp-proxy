@@ -18,15 +18,15 @@ int get_options(int argc, const char** argv)
 {
 	if (get_option_from_argument(argc, argv) != 1)
 	{
-		return 0;
+		return OPTION_ARGS_PARSE_ERROR;
 	}
 
 	if (!get_option_from_file())
 	{
-		return 0;
+		return OPTION_FILE_PARSE_ERROR;
 	}
 
-	return 1;
+	return OPTION_GET_SUCCESS;
 }
 
 /*
@@ -83,7 +83,7 @@ int get_option_from_argument(int argc, const char** argv)
 }
 
 /* Create option file if option file is not exists */
-int create_option_file()
+int create_option_file(void)
 {
 	FILE* fp = NULL;
 	
@@ -98,7 +98,7 @@ int create_option_file()
 }
 
 /* Get options from file (OPTION_FILE_NAME) */
-int get_option_from_file()
+int get_option_from_file(void)
 {
 	FILE* file = fopen(OPTION_FILE_NAME, "r");
 	char data[4096];
