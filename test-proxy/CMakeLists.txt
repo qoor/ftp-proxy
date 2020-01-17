@@ -1,19 +1,20 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
 set (SOURCE_FILE
-	"main.c"
-	"option.c"
-	"server.c"
-	"global_variables.c"
-	"log.c"
+	"src/main.c"
+	"src/option.c"
+	"src/server.c"
+	"src/global_variables.c"
+	"src/log.c"
 
-	"main.h"
-	"StdInc.h"
-	"option.h"
-	"server.h"
-	"global_variables.h"
-	"log.c"
+	"include/main.h"
+	"include/StdInc.h"
+	"include/option.h"
+	"include/server.h"
+	"include/global_variables.h"
+	"include/log.h"
 )
 
 add_executable (test-proxy ${SOURCE_FILE})
 
+target_include_directories (test-proxy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
