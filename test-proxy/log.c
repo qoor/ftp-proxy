@@ -28,6 +28,8 @@ int log_init()
     {
         return 0;
     }
+
+	return 1;
 }
 
 void log_write(const char* message)
