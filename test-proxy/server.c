@@ -11,7 +11,7 @@ void add_server(const char* connection_string)
 
 	if ((port_start_pos = strchr(connection_string, ':'))) /* 콜론을 발견한 경우 (콜론 앞: IP, 콜론 뒤: Port) */
 	{
-		address_len = (size_t)(connection_string - port_start_pos);
+		address_len = (size_t)(port_start_pos - connection_string);
 
 		server_list[server_count]->address = (char*)malloc(address_len * sizeof(char));
 		strncpy(server_list[server_count]->address, connection_string, address_len);
