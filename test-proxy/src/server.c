@@ -24,6 +24,7 @@ int add_server(const char* connection_string)
 	new_server->address = NULL;
 	new_server->port = 0;
 	new_server->socket_fd = -1;
+	memset(&(new_server->socket_address), 0x00, sizeof(struct sockaddr_in));
 
 	if ((port_start_pos = strchr(connection_string, ':')) == NULL) /* If colon not found from connection string (Before colon: IP, After colon: Port) */
 	{
@@ -108,4 +109,9 @@ void reset_server_list(void)
 
 	free(server_list);
 	server_count = 0;
+}
+
+void send_packet_to_server(struct server* dst_server, struct packet* packet)
+{
+	
 }
