@@ -8,6 +8,7 @@
 #define MAX_LOG_MESSAGE_LENGTH 1024
 
 static FILE* log_file = NULL;
+static char* log_buffer;
 
 /*
  * Initialize log system
@@ -22,19 +23,20 @@ int log_init()
         return 0;
     }
 
-    log_file = fopen(DEFAULT_LOG_FILE_PATH, "w");
+    log_file = fopen(DEFAULT_LOG_FILE_PATH, "a+");
 
     if (!log_file)
     {
         return 0;
     }
 
+	log_buffer = (char*)malloc(MAX_LOG_MESSAGE_LENGTH);
+	log_buffer[0] = '\0';
 	return 1;
 }
 
 void log_write(const char* message)
 {
-	char* string[MAX_LOG_MESSAGE_LENGTH];
 	struct timeb time_buffer;
 	time_t time;
 	struct tm* local_time;
@@ -51,9 +53,13 @@ void log_write(const char* message)
 	time = time_buffer.time;
 	local_time = localtime(&time);
 
-	sprintf(string, "[%04d-%02d-%02d %02d:%02d:%02d:%03d] %s", local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
+	/* 
+	 * Write log
+	 * Ex) [2020-01-17 13:46:00.000] Hello World!
+	*/
+	sprintf(log_buffer, "[%04d-%02d-%02d %02d:%02d:%02d.%03d] %s", local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
 		local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm, message);
-	fputs(string, log_file);
+	fputs(log_buffer, log_file);
 }
 
 int log_free()
@@ -65,7 +71,9 @@ int log_free()
 
 	fflush(log_file);
 	fclose(log_file);
+	free(log_buffer);
 
 	log_file = NULL;
+	log_buffer = NULL;
 	return 1;
 }
