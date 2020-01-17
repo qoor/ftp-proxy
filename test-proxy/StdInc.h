@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "log.h"
 #include "server.h"
 #include "option.h"
 #include "main.h"

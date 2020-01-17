@@ -51,7 +51,7 @@ EQUALS = =
 CMAKE_SOURCE_DIR = /root/projects/test-proxy
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /root/projects/test-proxy
+CMAKE_BINARY_DIR = /root/projects/test-proxy/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -80,14 +80,14 @@ edit_cache/fast: edit_cache
 
 # The main all target
 all: cmake_check_build_system
-	cd /root/projects/test-proxy && $(CMAKE_COMMAND) -E cmake_progress_start /root/projects/test-proxy/CMakeFiles /root/projects/test-proxy/test-proxy/CMakeFiles/progress.marks
-	cd /root/projects/test-proxy && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /root/projects/test-proxy/CMakeFiles 0
+	cd /root/projects/test-proxy/build && $(CMAKE_COMMAND) -E cmake_progress_start /root/projects/test-proxy/build/CMakeFiles /root/projects/test-proxy/build/test-proxy/CMakeFiles/progress.marks
+	cd /root/projects/test-proxy/build && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /root/projects/test-proxy/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /root/projects/test-proxy && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/clean
+	cd /root/projects/test-proxy/build && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/clean
 .PHONY : clean
 
 # The main clean target
@@ -97,22 +97,22 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /root/projects/test-proxy && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/preinstall
+	cd /root/projects/test-proxy/build && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /root/projects/test-proxy && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/preinstall
+	cd /root/projects/test-proxy/build && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /root/projects/test-proxy && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /root/projects/test-proxy/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 test-proxy/CMakeFiles/test-proxy.dir/rule:
-	cd /root/projects/test-proxy && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/CMakeFiles/test-proxy.dir/rule
+	cd /root/projects/test-proxy/build && $(MAKE) -f CMakeFiles/Makefile2 test-proxy/CMakeFiles/test-proxy.dir/rule
 .PHONY : test-proxy/CMakeFiles/test-proxy.dir/rule
 
 # Convenience name for target.
@@ -122,7 +122,7 @@ test-proxy: test-proxy/CMakeFiles/test-proxy.dir/rule
 
 # fast build rule for target.
 test-proxy/fast:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/build
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/build
 .PHONY : test-proxy/fast
 
 global_variables.o: global_variables.c.o
@@ -131,7 +131,7 @@ global_variables.o: global_variables.c.o
 
 # target to build an object file
 global_variables.c.o:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/global_variables.c.o
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/global_variables.c.o
 .PHONY : global_variables.c.o
 
 global_variables.i: global_variables.c.i
@@ -140,7 +140,7 @@ global_variables.i: global_variables.c.i
 
 # target to preprocess a source file
 global_variables.c.i:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/global_variables.c.i
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/global_variables.c.i
 .PHONY : global_variables.c.i
 
 global_variables.s: global_variables.c.s
@@ -149,35 +149,8 @@ global_variables.s: global_variables.c.s
 
 # target to generate assembly for a file
 global_variables.c.s:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/global_variables.c.s
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/global_variables.c.s
 .PHONY : global_variables.c.s
-
-log.o: log.c.o
-
-.PHONY : log.o
-
-# target to build an object file
-log.c.o:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/log.c.o
-.PHONY : log.c.o
-
-log.i: log.c.i
-
-.PHONY : log.i
-
-# target to preprocess a source file
-log.c.i:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/log.c.i
-.PHONY : log.c.i
-
-log.s: log.c.s
-
-.PHONY : log.s
-
-# target to generate assembly for a file
-log.c.s:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/log.c.s
-.PHONY : log.c.s
 
 main.o: main.c.o
 
@@ -185,7 +158,7 @@ main.o: main.c.o
 
 # target to build an object file
 main.c.o:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/main.c.o
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/main.c.o
 .PHONY : main.c.o
 
 main.i: main.c.i
@@ -194,7 +167,7 @@ main.i: main.c.i
 
 # target to preprocess a source file
 main.c.i:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/main.c.i
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/main.c.i
 .PHONY : main.c.i
 
 main.s: main.c.s
@@ -203,7 +176,7 @@ main.s: main.c.s
 
 # target to generate assembly for a file
 main.c.s:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/main.c.s
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/main.c.s
 .PHONY : main.c.s
 
 option.o: option.c.o
@@ -212,7 +185,7 @@ option.o: option.c.o
 
 # target to build an object file
 option.c.o:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/option.c.o
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/option.c.o
 .PHONY : option.c.o
 
 option.i: option.c.i
@@ -221,7 +194,7 @@ option.i: option.c.i
 
 # target to preprocess a source file
 option.c.i:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/option.c.i
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/option.c.i
 .PHONY : option.c.i
 
 option.s: option.c.s
@@ -230,7 +203,7 @@ option.s: option.c.s
 
 # target to generate assembly for a file
 option.c.s:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/option.c.s
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/option.c.s
 .PHONY : option.c.s
 
 server.o: server.c.o
@@ -239,7 +212,7 @@ server.o: server.c.o
 
 # target to build an object file
 server.c.o:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/server.c.o
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/server.c.o
 .PHONY : server.c.o
 
 server.i: server.c.i
@@ -248,7 +221,7 @@ server.i: server.c.i
 
 # target to preprocess a source file
 server.c.i:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/server.c.i
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/server.c.i
 .PHONY : server.c.i
 
 server.s: server.c.s
@@ -257,7 +230,7 @@ server.s: server.c.s
 
 # target to generate assembly for a file
 server.c.s:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/server.c.s
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/server.c.s
 .PHONY : server.c.s
 
 # Help Target
@@ -272,9 +245,6 @@ help:
 	@echo "... global_variables.o"
 	@echo "... global_variables.i"
 	@echo "... global_variables.s"
-	@echo "... log.o"
-	@echo "... log.i"
-	@echo "... log.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
@@ -295,6 +265,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /root/projects/test-proxy && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /root/projects/test-proxy/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

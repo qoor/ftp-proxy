@@ -4,17 +4,29 @@ int main(int argc, const char** argv)
 {
 	int i;
 
-	if (!get_options(argc, argv))
+	/* Initializing */
+	if (!log_init())
 	{
 		return 0;
 	}
+
+	if (!get_options(argc, argv))
+	{
+		log_free();
+		return 0;
+	}
+	/* */
 	
 	printf("파일을 읽었지비?\n");
 	
 	/* Main logic write in here */
 
+	/* */
+
 	/* Free allocated memories */
 	reset_server_list();
+	log_free();
+	/* */
 
 	return 0;
 }

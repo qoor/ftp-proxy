@@ -1,0 +1,22 @@
+[
+{
+  "directory": "/root/projects/test-proxy/build/test-proxy",
+  "command": "/usr/bin/cc    -std=c90 -g   -o CMakeFiles/test-proxy.dir/main.c.o   -c /root/projects/test-proxy/test-proxy/main.c",
+  "file": "/root/projects/test-proxy/test-proxy/main.c"
+},
+{
+  "directory": "/root/projects/test-proxy/build/test-proxy",
+  "command": "/usr/bin/cc    -std=c90 -g   -o CMakeFiles/test-proxy.dir/option.c.o   -c /root/projects/test-proxy/test-proxy/option.c",
+  "file": "/root/projects/test-proxy/test-proxy/option.c"
+},
+{
+  "directory": "/root/projects/test-proxy/build/test-proxy",
+  "command": "/usr/bin/cc    -std=c90 -g   -o CMakeFiles/test-proxy.dir/server.c.o   -c /root/projects/test-proxy/test-proxy/server.c",
+  "file": "/root/projects/test-proxy/test-proxy/server.c"
+},
+{
+  "directory": "/root/projects/test-proxy/build/test-proxy",
+  "command": "/usr/bin/cc    -std=c90 -g   -o CMakeFiles/test-proxy.dir/global_variables.c.o   -c /root/projects/test-proxy/test-proxy/global_variables.c",
+  "file": "/root/projects/test-proxy/test-proxy/global_variables.c"
+}
+]
