@@ -5,13 +5,6 @@
 #define OPTION_FILE_PARSE_ERROR		-1
 #define OPTION_ARGS_PARSE_ERROR		-2
 
-struct option
-{
-	struct server** servers;
-};
-
-struct option proxy_option;
-
 int get_options(int argc, const char** argv);
 int get_option_from_argument(int argc, const char** argv);
 int get_option_from_file(void);
