@@ -125,113 +125,140 @@ test-proxy/fast:
 	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/build
 .PHONY : test-proxy/fast
 
-global_variables.o: global_variables.c.o
+src/global_variables.o: src/global_variables.c.o
 
-.PHONY : global_variables.o
-
-# target to build an object file
-global_variables.c.o:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/global_variables.c.o
-.PHONY : global_variables.c.o
-
-global_variables.i: global_variables.c.i
-
-.PHONY : global_variables.i
-
-# target to preprocess a source file
-global_variables.c.i:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/global_variables.c.i
-.PHONY : global_variables.c.i
-
-global_variables.s: global_variables.c.s
-
-.PHONY : global_variables.s
-
-# target to generate assembly for a file
-global_variables.c.s:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/global_variables.c.s
-.PHONY : global_variables.c.s
-
-main.o: main.c.o
-
-.PHONY : main.o
+.PHONY : src/global_variables.o
 
 # target to build an object file
-main.c.o:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/main.c.o
-.PHONY : main.c.o
+src/global_variables.c.o:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/global_variables.c.o
+.PHONY : src/global_variables.c.o
 
-main.i: main.c.i
+src/global_variables.i: src/global_variables.c.i
 
-.PHONY : main.i
+.PHONY : src/global_variables.i
 
 # target to preprocess a source file
-main.c.i:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/main.c.i
-.PHONY : main.c.i
+src/global_variables.c.i:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/global_variables.c.i
+.PHONY : src/global_variables.c.i
 
-main.s: main.c.s
+src/global_variables.s: src/global_variables.c.s
 
-.PHONY : main.s
+.PHONY : src/global_variables.s
 
 # target to generate assembly for a file
-main.c.s:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/main.c.s
-.PHONY : main.c.s
+src/global_variables.c.s:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/global_variables.c.s
+.PHONY : src/global_variables.c.s
 
-option.o: option.c.o
+src/log.o: src/log.c.o
 
-.PHONY : option.o
+.PHONY : src/log.o
 
 # target to build an object file
-option.c.o:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/option.c.o
-.PHONY : option.c.o
+src/log.c.o:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/log.c.o
+.PHONY : src/log.c.o
 
-option.i: option.c.i
+src/log.i: src/log.c.i
 
-.PHONY : option.i
+.PHONY : src/log.i
 
 # target to preprocess a source file
-option.c.i:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/option.c.i
-.PHONY : option.c.i
+src/log.c.i:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/log.c.i
+.PHONY : src/log.c.i
 
-option.s: option.c.s
+src/log.s: src/log.c.s
 
-.PHONY : option.s
+.PHONY : src/log.s
 
 # target to generate assembly for a file
-option.c.s:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/option.c.s
-.PHONY : option.c.s
+src/log.c.s:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/log.c.s
+.PHONY : src/log.c.s
 
-server.o: server.c.o
+src/main.o: src/main.c.o
 
-.PHONY : server.o
+.PHONY : src/main.o
 
 # target to build an object file
-server.c.o:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/server.c.o
-.PHONY : server.c.o
+src/main.c.o:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/main.c.o
+.PHONY : src/main.c.o
 
-server.i: server.c.i
+src/main.i: src/main.c.i
 
-.PHONY : server.i
+.PHONY : src/main.i
 
 # target to preprocess a source file
-server.c.i:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/server.c.i
-.PHONY : server.c.i
+src/main.c.i:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/main.c.i
+.PHONY : src/main.c.i
 
-server.s: server.c.s
+src/main.s: src/main.c.s
 
-.PHONY : server.s
+.PHONY : src/main.s
 
 # target to generate assembly for a file
-server.c.s:
-	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/server.c.s
-.PHONY : server.c.s
+src/main.c.s:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/main.c.s
+.PHONY : src/main.c.s
+
+src/option.o: src/option.c.o
+
+.PHONY : src/option.o
+
+# target to build an object file
+src/option.c.o:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/option.c.o
+.PHONY : src/option.c.o
+
+src/option.i: src/option.c.i
+
+.PHONY : src/option.i
+
+# target to preprocess a source file
+src/option.c.i:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/option.c.i
+.PHONY : src/option.c.i
+
+src/option.s: src/option.c.s
+
+.PHONY : src/option.s
+
+# target to generate assembly for a file
+src/option.c.s:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/option.c.s
+.PHONY : src/option.c.s
+
+src/server.o: src/server.c.o
+
+.PHONY : src/server.o
+
+# target to build an object file
+src/server.c.o:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/server.c.o
+.PHONY : src/server.c.o
+
+src/server.i: src/server.c.i
+
+.PHONY : src/server.i
+
+# target to preprocess a source file
+src/server.c.i:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/server.c.i
+.PHONY : src/server.c.i
+
+src/server.s: src/server.c.s
+
+.PHONY : src/server.s
+
+# target to generate assembly for a file
+src/server.c.s:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/server.c.s
+.PHONY : src/server.c.s
 
 # Help Target
 help:
@@ -242,18 +269,21 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... test-proxy"
-	@echo "... global_variables.o"
-	@echo "... global_variables.i"
-	@echo "... global_variables.s"
-	@echo "... main.o"
-	@echo "... main.i"
-	@echo "... main.s"
-	@echo "... option.o"
-	@echo "... option.i"
-	@echo "... option.s"
-	@echo "... server.o"
-	@echo "... server.i"
-	@echo "... server.s"
+	@echo "... src/global_variables.o"
+	@echo "... src/global_variables.i"
+	@echo "... src/global_variables.s"
+	@echo "... src/log.o"
+	@echo "... src/log.i"
+	@echo "... src/log.s"
+	@echo "... src/main.o"
+	@echo "... src/main.i"
+	@echo "... src/main.s"
+	@echo "... src/option.o"
+	@echo "... src/option.i"
+	@echo "... src/option.s"
+	@echo "... src/server.o"
+	@echo "... src/server.i"
+	@echo "... src/server.s"
 .PHONY : help
 
 
