@@ -13,15 +13,9 @@ int main(int argc, const char** argv)
 	
 	/* Main logic write in here */
 
+	/* Free allocated memories */
+	reset_server_list();
 
-/* IMPORTANT: MUST execute this code when program will shutdown */
-clean:
-	for (i = 0; i < server_count; ++i)
-	{
-		free(server_list[i]);
-	}
-
-	free(server_list);
 	return 0;
 }
 
@@ -29,8 +23,8 @@ clean:
 int print_help(const char* argv)
 {
 	printf("---------- Help ----------\n");
-	printf("Usage: %s \n", argv);
-	printf("debugging: %s -c debugging [Developer Only] \n", argv);
-	printf("Help: %s -h \n", argv);
+	printf("Usage: %s \n", argv[0]);
+	printf("debugging: %s -c debugging [Developer Only] \n", argv[0]);
+	printf("Help: %s -h \n", argv[0]);
 	return 0;
 }

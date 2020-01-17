@@ -22,3 +22,20 @@ void add_server(const char* connection_string)
 	printf("서버를 추가했지비 \n");
 	++server_count;
 }
+
+void reset_server_list()
+{
+	int i;
+	
+	if (!server_list)
+	{
+		return;
+	}
+
+	for (i = 0; i < server_count; ++i)
+	{
+		free(server_list[i]);
+	}
+
+	free(server_list);
+}

@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "time.h": "c"
+	},
+	"C_Cpp.default.cStandard": "c89"
+}
