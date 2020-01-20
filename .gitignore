@@ -1,5 +1,7 @@
-/.vs
+**/.vs
 /out
 **/CMakeCache.txt
 **/CMakeFiles
 test-proxy/test-proxy
+**/cmake_install.cmake
+**/Makefile
