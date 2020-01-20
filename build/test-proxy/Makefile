@@ -233,6 +233,33 @@ src/option.c.s:
 	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/option.c.s
 .PHONY : src/option.c.s
 
+src/packet.o: src/packet.c.o
+
+.PHONY : src/packet.o
+
+# target to build an object file
+src/packet.c.o:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/packet.c.o
+.PHONY : src/packet.c.o
+
+src/packet.i: src/packet.c.i
+
+.PHONY : src/packet.i
+
+# target to preprocess a source file
+src/packet.c.i:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/packet.c.i
+.PHONY : src/packet.c.i
+
+src/packet.s: src/packet.c.s
+
+.PHONY : src/packet.s
+
+# target to generate assembly for a file
+src/packet.c.s:
+	cd /root/projects/test-proxy/build && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/packet.c.s
+.PHONY : src/packet.c.s
+
 src/server.o: src/server.c.o
 
 .PHONY : src/server.o
@@ -281,6 +308,9 @@ help:
 	@echo "... src/option.o"
 	@echo "... src/option.i"
 	@echo "... src/option.s"
+	@echo "... src/packet.o"
+	@echo "... src/packet.i"
+	@echo "... src/packet.s"
 	@echo "... src/server.o"
 	@echo "... src/server.i"
 	@echo "... src/server.s"

@@ -111,7 +111,8 @@ void reset_server_list(void)
 	server_count = 0;
 }
 
-void send_packet_to_server(struct server* dst_server, struct packet* packet)
+void send_packet_to_server(struct server* dst_server, unsigned char* packet)
 {
-	
+	change_packet_dst_address(packet, &dst_server->socket_address);
+	sendto(dst_server->socket_fd, packet, ((struct iphdr*)packet)->tot_len, 0x0, (struct sockaddr*)&dst_server->socket_address, sizeof(struct sockaddr));
 }
