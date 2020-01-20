@@ -145,10 +145,9 @@ void reset_server_list(struct vector* dest)
 	vector_clear(dest);
 }
 
-/* [Error]undefined reference to ~ XXX
 void send_packet_to_server(struct server* dst_server, unsigned char* packet)
 {
-	change_packet_dst_address(packet, &dst_server->socket_address);
+	change_packet_address(packet, &dst_server->socket_address, PACKET_ADDR_CHANGE_TYPE_DEST);
 	sendto(dst_server->socket_fd, packet, ((struct iphdr*)packet)->tot_len, 0x0, (struct sockaddr*)&dst_server->socket_address, sizeof(struct sockaddr));
 }
-*/
+
