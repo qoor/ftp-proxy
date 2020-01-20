@@ -34,6 +34,15 @@ enum log_option_get_error_type
 };
 /* */
 
+/* ARGUMENT RETURN CODE DEFINE */
+enum get_argument_error_type
+{
+	ARGUMENT_SUCCESS,
+	ARGUMENT_FAIL,
+	ARGUMENT_NOT_FOUND
+};
+/* */
+
 /* SERVER RETURN CODE DEFINE */
 enum server_add_error_type
 {

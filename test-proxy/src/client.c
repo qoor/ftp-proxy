@@ -40,7 +40,7 @@ void create_socket()
 
 void listen_epoll()
 {
-	if (bind(listen_file_descriptor, (struct sockaddr*) &server_address, sizeof(server_address)) == -1)
+	if (bind(listen_file_descriptor, (struct sockaddr *)&server_address, sizeof(server_address)) == -1)
 	{
 		error_proc("bind");
 	}
@@ -70,27 +70,26 @@ void listen_epoll()
 			{
 				error_proc("epoll_wait");
 			}
-
-			for(i=0; i<ready; i++)
+		}
+		for (i = 0; i < ready; i++)
+		{
+			if (events[i].data.fd = listen_file_descriptor) /* accept a client */
 			{
-				if(events[i].data.fd=listen_file_descriptor) /* accept a client */
+				connect_file_descriptor = accept(listen_file_descriptor, (struct sockaddr *)&client_address, &client_address_len);
+				if (connect_file_descriptor == -1)
 				{
-					connect_file_descriptor = accept(listen_file_descriptor, (struct sockaddr*) &client_address, &client_address_len);
-					if(connect_file_descriptor == -1)
-					{
-						fprintf(stderr, "Accept ERROR \n");
-						continue;
-					}
-					fprintf(stderr, " A client is connected... \n");
-					events.data.fd = connect_file_descriptor;
-					if(epoll_ctl(epfd, EPOLL_CTL_ADD, connect_file_descriptor, &event) == -1)
-					{
-						error_proc("epoll_ctl");
-					}
-					else
-					{
-						/* run code */
-					}
+					fprintf(stderr, "Accept ERROR \n");
+					continue;
+				}
+				fprintf(stderr, " A client is connected... \n");
+				event.data.fd = connect_file_descriptor;
+				if (epoll_ctl(epoll_file_descriptor, EPOLL_CTL_ADD, connect_file_descriptor, &event) == -1)
+				{
+					error_proc("epoll_ctl");
+				}
+				else
+				{
+					/* run code */
 				}
 			}
 		}
@@ -99,7 +98,7 @@ void listen_epoll()
 	close(epoll_file_descriptor);
 }
 
-void error_proc(const char* str)
+void error_proc(const char *str)
 {
 	fprintf(stderr, "\n [%s]: [%s] \n", str, strerror(errno));
 	exit(1);
