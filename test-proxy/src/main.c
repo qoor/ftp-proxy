@@ -14,25 +14,24 @@ int main(int argc, const char** argv)
 	/* Initializing */
 	if (log_init() != LOG_INIT_SUCCESS)
 	{
-		main_free();
 		return 0;
 	}
 
 	if (vector_init(&option.connection_strings, 0) != VECTOR_SUCCESS || vector_init(&server_list, 0) != VECTOR_SUCCESS)
 	{
-		main_free();
+		main_free(&server_list);
 		return 0;
 	}
 
 	if (get_options(&option, argc, argv) != OPTION_GET_SUCCESS)
 	{
-		main_free();
+		main_free(&server_list);
 		return 0;
 	}
 
 	if (add_servers_from_vector(&server_list, &option.connection_strings) != SERVER_ADD_SUCCESS)
 	{
-		main_free();
+		main_free(&server_list);
 		return 0;
 	}
 	/* */
@@ -42,7 +41,7 @@ int main(int argc, const char** argv)
 	/* */
 
 	/* Free allocated memories */
-	main_free();
+	main_free(&server_list);
 	/* */
 
 	return 0;
@@ -63,8 +62,8 @@ int print_help(const char* argv)
 	return 0;
 }
 
-void main_free()
+void main_free(struct vector* server_list)
 {
-	reset_server_list();
+	reset_server_list(server_list);
 	log_free();
 }

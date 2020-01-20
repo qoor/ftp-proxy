@@ -11,7 +11,7 @@ struct server
 
 int add_servers_from_vector(struct vector* dest, const struct vector* connection_strings);
 int add_server(struct vector* dest, const char* connection_string);
-void reset_server_list(void);
+void reset_server_list(struct vector* dest);
 void send_packet_to_server(struct server* dst_server, unsigned char* packet);
 
 #endif

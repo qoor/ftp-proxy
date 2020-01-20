@@ -64,7 +64,7 @@ int add_server(struct vector* dest, const char* connection_string)
 	server_object->socket_fd = -1;
 	memset(&server_object->socket_address, 0x00, sizeof(struct sockaddr_in));
 
-	if ((colon_pos = strchr(connection_string, ':')) == NULL || strlen(connection_string) <= colon_pos + 1)
+	if ((colon_pos = strchr(connection_string, ':')) == NULL)
 	{
 		server_free(server_object);
 		return SERVER_ADD_INCORRECT_CONNECTION_STRING;
@@ -125,22 +125,24 @@ static void server_free(struct server* target_server)
 	memset(&target_server->socket_address, 0x00, sizeof(struct sockaddr_in));
 }
 
-void reset_server_list(void)
+void reset_server_list(struct vector* dest)
 {
 	int i = 0;
+	int server_count = 0;
 	
-	if (server_list == NULL)
+	if (dest == NULL)
 	{
 		return;
 	}
 
+	server_count = dest->size;
+
 	for (i = 0; i < server_count; ++i)
 	{
-		server_free(server_list[i]);
+		server_free(dest->container[i]);
 	}
 
-	free(server_list);
-	server_count = 0;
+	vector_clear(dest);
 }
 
 /* [Error]undefined reference to ~ XXX

@@ -180,3 +180,14 @@ int vector_set_capacity(struct vector* vector, size_t capacity)
 
 	return VECTOR_SUCCESS;
 }
+
+int vector_clear(struct vector* vector)
+{
+	if (vector == NULL)
+	{
+		return VECTOR_INVALID;
+	}
+
+	memset(vector->container, 0x00, vector->capacity * sizeof(void*));
+	vector->size = 0;
+}
