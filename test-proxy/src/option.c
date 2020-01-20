@@ -16,7 +16,7 @@
 
 int get_options(int argc, const char** argv)
 {
-	if (get_option_from_argument(argc, argv) != 1)
+	if (get_option_from_argument(argc, argv) != ARGUMENT_NOT_FOUND)
 	{
 		return OPTION_GET_ARGS_PARSE_ERROR;
 	}
@@ -34,9 +34,9 @@ int get_options(int argc, const char** argv)
  * C90 does not support getopt() then require this function
  *
  * Return values
- * -1: fail
  *  0: success
- *  1: No sub argument
+ *  1: fail
+ *  2: No sub argument
 */
 int get_option_from_argument(int argc, const char** argv)
 {
@@ -44,7 +44,7 @@ int get_option_from_argument(int argc, const char** argv)
 	if (argc > 3)
 	{
 		fprintf(stderr, "Usage: %s -c [command] \n", argv[0]);
-		return -1;
+		return ARGUMENT_FAIL;
 	}
 	for (option = 1; option < argc; ++option) /* argv[0] is file name */
 	{
@@ -56,33 +56,32 @@ int get_option_from_argument(int argc, const char** argv)
 				create_epoll();
 				create_socket();
 				listen_epoll();
-				return 0;
+				return ARGUMENT_SUCCESS;
 			}
 			else
 			{
 				fprintf(stderr, "Unknown command %s. \n", argv[option + 1]);
-				return -1;
+				return ARGUMENT_FAIL;
 			}
-			return 0;
 		}
 		else if (strcmp(argv[option], "-c") == 0 && argv[option + 1] == NULL) /* If argument does not have after -c argument */
 		{
 			fprintf(stderr, "option -c requires an argument.\n");
-			return -1;
+			return ARGUMENT_FAIL;
 		}
 
 		if (strcmp(argv[option], "-h") == 0 || (strcmp(argv[option], "--help") == 0)) /* `help` parser*/
 		{
 			print_help(argv[0]);
-			return 0;
+			return ARGUMENT_SUCCESS;
 		}
 		else
 		{
 			fprintf(stderr, "Unknown option %s. \n", argv[option]);
-			return -1;
+			return ARGUMENT_FAIL;
 		}
 	}
-	return 1;
+	return ARGUMENT_NOT_FOUND;
 }
 
 /* Create option file if option file is not exists */
