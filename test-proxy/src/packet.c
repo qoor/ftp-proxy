@@ -39,7 +39,7 @@ void change_packet_address(unsigned char* target_packet, const struct sockaddr_i
 	tcp_cksum_header.pseudo_header.protocol = ip_header->protocol;
 	tcp_cksum_header.pseudo_header.tcplength = ip_header->tot_len - ip_header_length;
 
-	tcp_header->check = in_cksum((unsigned char*)&tcp_cksum_header.pseudo_header, sizeof(struct tcpcksumhdr));
+	tcp_header->check = in_cksum((unsigned short*)&tcp_cksum_header.pseudo_header, sizeof(struct tcpcksumhdr));
 }
 
 /*

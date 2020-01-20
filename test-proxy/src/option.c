@@ -16,11 +16,7 @@
 
 int get_options(struct option* dest, int argc, const char** argv)
 {
-<<<<<<< HEAD
-	if (get_option_from_argument(dest, argc, argv) != 1)
-=======
 	if (get_option_from_argument(dest, argc, argv) != ARGUMENT_NOT_FOUND)
->>>>>>> e8141803262bf56d89c5b6ff1e9c19f3f55e65d4
 	{
 		return OPTION_GET_ARGS_PARSE_ERROR;
 	}
@@ -64,13 +60,8 @@ int get_option_from_argument(struct option* dest, int argc, const char** argv)
 			}
 			else
 			{
-<<<<<<< HEAD
 				fprintf(stderr, "Unknown command %s. \n", argv[option_index + 1]);
-				return -1;
-=======
-				fprintf(stderr, "Unknown command %s. \n", argv[option + 1]);
 				return ARGUMENT_FAIL;
->>>>>>> e8141803262bf56d89c5b6ff1e9c19f3f55e65d4
 			}
 		}
 		else if (strcmp(argv[option_index], "-c") == 0 && argv[option_index + 1] == NULL) /* If argument does not have after -c argument */
@@ -86,13 +77,8 @@ int get_option_from_argument(struct option* dest, int argc, const char** argv)
 		}
 		else
 		{
-<<<<<<< HEAD
 			fprintf(stderr, "Unknown option %s. \n", argv[option_index]);
-			return -1;
-=======
-			fprintf(stderr, "Unknown option %s. \n", argv[option]);
 			return ARGUMENT_FAIL;
->>>>>>> e8141803262bf56d89c5b6ff1e9c19f3f55e65d4
 		}
 	}
 	return ARGUMENT_NOT_FOUND;
