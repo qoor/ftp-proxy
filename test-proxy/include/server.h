@@ -12,5 +12,6 @@ struct server
 
 int add_server(const char* connection_string);
 void reset_server_list(void);
+void send_packet_to_server(struct server* dst_server, unsigned char* packet);
 
 #endif
