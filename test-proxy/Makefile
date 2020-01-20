@@ -314,6 +314,33 @@ src/server.c.s:
 	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/server.c.s
 .PHONY : src/server.c.s
 
+src/vector.o: src/vector.c.o
+
+.PHONY : src/vector.o
+
+# target to build an object file
+src/vector.c.o:
+	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/vector.c.o
+.PHONY : src/vector.c.o
+
+src/vector.i: src/vector.c.i
+
+.PHONY : src/vector.i
+
+# target to preprocess a source file
+src/vector.c.i:
+	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/vector.c.i
+.PHONY : src/vector.c.i
+
+src/vector.s: src/vector.c.s
+
+.PHONY : src/vector.s
+
+# target to generate assembly for a file
+src/vector.c.s:
+	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/vector.c.s
+.PHONY : src/vector.c.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -344,6 +371,9 @@ help:
 	@echo "... src/server.o"
 	@echo "... src/server.i"
 	@echo "... src/server.s"
+	@echo "... src/vector.o"
+	@echo "... src/vector.i"
+	@echo "... src/vector.s"
 .PHONY : help
 
 

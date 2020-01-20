@@ -8,6 +8,7 @@ set (SOURCE_FILE
 	"src/log.c"
 	"src/packet.c"
 	"src/client.c"
+	"src/vector.c"
 
 	"include/main.h"
 	"include/StdInc.h"
@@ -18,6 +19,7 @@ set (SOURCE_FILE
 	"include/packet.h"
 	"include/client.h"
 	"include/proxy.h"
+	"include/vector.h"
 )
 
 add_executable (test-proxy ${SOURCE_FILE})

@@ -4,13 +4,13 @@
 /* Server info structure */
 struct server
 {
-	char* address;
-	unsigned short port;
 	int socket_fd;
 	struct sockaddr_in socket_address;
 };
+/* */
 
-int add_server(const char* connection_string);
+int add_servers_from_vector(struct vector* dest, const struct vector* connection_strings);
+int add_server(struct vector* dest, const char* connection_string);
 void reset_server_list(void);
 
 #endif

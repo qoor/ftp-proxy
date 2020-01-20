@@ -1,18 +1,38 @@
 #include "StdInc.h"
 
+static void main_free();
+
 int main(int argc, const char** argv)
 {
-	int i;
+	struct vector server_list = { 0, };
+	int server_count = 0;
+
+	struct option option = {
+		.connection_strings = { 0, }
+	};
 
 	/* Initializing */
 	if (log_init() != LOG_INIT_SUCCESS)
 	{
+		main_free();
 		return 0;
 	}
 
-	if (get_options(argc, argv) != OPTION_GET_SUCCESS)
+	if (vector_init(&option.connection_strings, 0) != VECTOR_SUCCESS || vector_init(&server_list, 0) != VECTOR_SUCCESS)
 	{
-		log_free();
+		main_free();
+		return 0;
+	}
+
+	if (get_options(&option, argc, argv) != OPTION_GET_SUCCESS)
+	{
+		main_free();
+		return 0;
+	}
+
+	if (add_servers_from_vector(&server_list, &option.connection_strings) != SERVER_ADD_SUCCESS)
+	{
+		main_free();
 		return 0;
 	}
 	/* */
@@ -22,8 +42,7 @@ int main(int argc, const char** argv)
 	/* */
 
 	/* Free allocated memories */
-	reset_server_list();
-	log_free();
+	main_free();
 	/* */
 
 	return 0;
@@ -42,4 +61,10 @@ int print_help(const char* argv)
 	printf("debugging: %s -c debugging [Developer Only] \n", argv);
 	printf("Help: %s -h \n", argv);
 	return 0;
+}
+
+void main_free()
+{
+	reset_server_list();
+	log_free();
 }
