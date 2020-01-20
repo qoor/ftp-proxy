@@ -125,6 +125,33 @@ test-proxy/fast:
 	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/build
 .PHONY : test-proxy/fast
 
+src/client.o: src/client.c.o
+
+.PHONY : src/client.o
+
+# target to build an object file
+src/client.c.o:
+	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/client.c.o
+.PHONY : src/client.c.o
+
+src/client.i: src/client.c.i
+
+.PHONY : src/client.i
+
+# target to preprocess a source file
+src/client.c.i:
+	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/client.c.i
+.PHONY : src/client.c.i
+
+src/client.s: src/client.c.s
+
+.PHONY : src/client.s
+
+# target to generate assembly for a file
+src/client.c.s:
+	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/client.c.s
+.PHONY : src/client.c.s
+
 src/global_variables.o: src/global_variables.c.o
 
 .PHONY : src/global_variables.o
@@ -296,6 +323,9 @@ help:
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
 	@echo "... test-proxy"
+	@echo "... src/client.o"
+	@echo "... src/client.i"
+	@echo "... src/client.s"
 	@echo "... src/global_variables.o"
 	@echo "... src/global_variables.i"
 	@echo "... src/global_variables.s"

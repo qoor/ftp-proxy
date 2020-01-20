@@ -18,12 +18,12 @@ int get_options(int argc, const char** argv)
 {
 	if (get_option_from_argument(argc, argv) != 1)
 	{
-		return OPTION_ARGS_PARSE_ERROR;
+		return OPTION_GET_ARGS_PARSE_ERROR;
 	}
 
 	if (!get_option_from_file())
 	{
-		return OPTION_FILE_PARSE_ERROR;
+		return OPTION_GET_FILE_PARSE_ERROR;
 	}
 
 	return OPTION_GET_SUCCESS;

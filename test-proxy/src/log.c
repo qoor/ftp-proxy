@@ -1,10 +1,14 @@
-#include "StdInc.h"
-#include "log.h"
-
+#include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
+#include <malloc.h>
+#include <string.h>
 
 #include <sys/timeb.h>
+#include <pthread.h>
+
+#include "log.h"
+#include "proxy.h"
 
 static FILE* log_file = NULL;
 static char* log_buffer = NULL;
