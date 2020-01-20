@@ -6,7 +6,7 @@
 
 struct ip_hdr
 {
-#if __BYTE_ORDER__ = __LITTLE_ENDIAN
+#if __BYTE_ORDER__ == __LITTLE_ENDIAN
     uint8_t ip_hdr_len:4; /* IP HEADER LENGTH */
     uint8_t ip_version:4; /* IP VERSION */
 #else
@@ -26,10 +26,10 @@ struct ip_hdr
     uint32_t ip_src; /* SOURCE ADDRESS */
     uint16_t ip_dst; /* DESTINATION ADDRESS */
 
-}
+};
 
 void error_proc(const char* str);
-int create_epoll(void);
-int create_socket(void);
-int listen_epoll(void);
+void create_epoll(void);
+void create_socket(void);
+void listen_epoll(void);
 #endif

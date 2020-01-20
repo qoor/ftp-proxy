@@ -40,7 +40,7 @@ enum get_argument_error_type
 	ARGUMENT_SUCCESS,
 	ARGUMENT_FAIL,
 	ARGUMENT_NOT_FOUND
-}
+};
 /* */
 
 /* SERVER RETURN CODE DEFINE */
