@@ -29,7 +29,6 @@
 #include "option.h"
 #include "packet.h"
 #include "main.h"
-#include "global_variables.h"
 #include "client.h"
 
 #endif

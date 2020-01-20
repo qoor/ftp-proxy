@@ -152,33 +152,6 @@ src/client.c.s:
 	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/client.c.s
 .PHONY : src/client.c.s
 
-src/global_variables.o: src/global_variables.c.o
-
-.PHONY : src/global_variables.o
-
-# target to build an object file
-src/global_variables.c.o:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/global_variables.c.o
-.PHONY : src/global_variables.c.o
-
-src/global_variables.i: src/global_variables.c.i
-
-.PHONY : src/global_variables.i
-
-# target to preprocess a source file
-src/global_variables.c.i:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/global_variables.c.i
-.PHONY : src/global_variables.c.i
-
-src/global_variables.s: src/global_variables.c.s
-
-.PHONY : src/global_variables.s
-
-# target to generate assembly for a file
-src/global_variables.c.s:
-	cd /root/projects/test-proxy && $(MAKE) -f test-proxy/CMakeFiles/test-proxy.dir/build.make test-proxy/CMakeFiles/test-proxy.dir/src/global_variables.c.s
-.PHONY : src/global_variables.c.s
-
 src/log.o: src/log.c.o
 
 .PHONY : src/log.o
@@ -353,9 +326,6 @@ help:
 	@echo "... src/client.o"
 	@echo "... src/client.i"
 	@echo "... src/client.s"
-	@echo "... src/global_variables.o"
-	@echo "... src/global_variables.i"
-	@echo "... src/global_variables.s"
 	@echo "... src/log.o"
 	@echo "... src/log.i"
 	@echo "... src/log.s"

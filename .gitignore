@@ -2,4 +2,4 @@
 /out
 **/CMakeCache.txt
 **/CMakeFiles
-
+test-proxy/test-proxy
