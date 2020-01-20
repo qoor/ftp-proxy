@@ -4,7 +4,10 @@
         "stdinc.h": "c",
         "tcp.h": "c",
         "ip.h": "c",
-        "byteorder.h": "c"
+        "byteorder.h": "c",
+        "proxy.h": "c",
+        "log.h": "c",
+        "cstdio": "c"
     },
     "C_Cpp.default.cStandard": "c89",
     "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"

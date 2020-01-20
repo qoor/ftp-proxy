@@ -9,6 +9,7 @@
 #include <malloc.h>
 #include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -21,6 +22,7 @@
 
 #include <linux/tcp.h>
 
+#include "proxy.h"
 #include "log.h"
 #include "server.h"
 #include "option.h"

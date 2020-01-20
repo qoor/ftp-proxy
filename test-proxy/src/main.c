@@ -17,8 +17,6 @@ int main(int argc, const char** argv)
 	}
 	/* */
 	
-	printf("파일을 읽었지비?\n");
-	
 	/* Main logic write in here */
 
 	/* */
@@ -32,11 +30,16 @@ int main(int argc, const char** argv)
 }
 
 /* Print help */
+/*
+Do not use argv[0] as a factor.
+Argv[0] should not be used as a printf factor because argv[0] is already passed as a factor when calling the print_help function.
+It cause Segmentation fault
+*/
 int print_help(const char* argv)
 {
 	printf("---------- Help ----------\n");
-	printf("Usage: %s \n", argv[0]);
-	printf("debugging: %s -c debugging [Developer Only] \n", argv[0]);
-	printf("Help: %s -h \n", argv[0]);
+	printf("Usage: %s \n", argv);
+	printf("debugging: %s -c debugging [Developer Only] \n", argv);
+	printf("Help: %s -h \n", argv);
 	return 0;
 }

@@ -1,22 +1,23 @@
 #include "StdInc.h"
 
 int i = 0;
-/* epoll 사용을 위한 변수선언, epoll_event 구조체 선언 */
+/* variable declaration for use of epoll, epoll_event structure declaration */
 int epoll_file_descriptor = 0, ready = 0, read_file_descriptor = 0;
 struct epoll_event event = { 0, };
 struct epoll_event events[MAX_EVENTS] = { 0, };
-/* socket 사용을 위한 변수선언, 구조체 선언 */
+/* Variable declaration for socket use, structure declaration */
 int listen_file_descriptor = 0, connect_file_descriptor = 0;
-struct sockaddr_in server_address = { 0, };
+int client_address_len = 0;
+struct sockaddr_in server_address = { 0, }, client_address = {0, } ;
 
 /*
-멀티 플렉싱 기반의 다중 서버 : kernel 에서는 하나의 스레드가 여러 개의 소켓(파일)을 핸들링 할 수 있는 select, poll, epoll 같은 시스템 콜을 제공한다.
-epoll 방식으로 멀티 플렉싱 기반의 다중 서버를 구현하였습니다.
+Multiple servers based on multi-flecking: kernel provides system calls such as select, pol, and epoll, where a thread can handle multiple sockets (files).
+We deployed multiple servers based on multiplexing in an epol method.
 */
 
 void create_epoll()
 {
-	epoll_file_descriptor = epoll_create(MAX_EVENTS); /* epoll 객체 생성 */
+	epoll_file_descriptor = epoll_create(MAX_EVENTS); /* Create an epoll object */
 	if (epoll_file_descriptor == -1)
 	{
 		error_proc("epoll_create");
@@ -49,7 +50,7 @@ void listen_epoll()
 	}
 
 	event.events = EPOLLIN;
-	event.data.fd = listen_file_descriptor; /* 파일 디스크립터를 epoll 인스턴스에 등록한다 (관찰대상의 관찰 이벤트 유형은 EPOLLIN) */
+	event.data.fd = listen_file_descriptor; /* Register the file disk reader with the epoll instance (EpOLLIN for observation) */
 	if (epoll_ctl(epoll_file_descriptor, EPOLL_CTL_ADD, listen_file_descriptor, &event) == -1)
 	{
 		error_proc("epoll_ctl");
@@ -58,16 +59,39 @@ void listen_epoll()
 	printf("Monitoring ...\n");
 	while (1)
 	{
-		ready = epoll_wait(epoll_file_descriptor, events, MAX_EVENTS, -1); /* 모니터링 시작 */
+		ready = epoll_wait(epoll_file_descriptor, events, MAX_EVENTS, -1); /* Start Monitoring */
 		if (ready == -1)
 		{
 			if (errno == EINTR)
 			{
-				continue; /* 인터럽트인 경우 계속 실행 */
+				continue; /* Continue if interrupt */
 			}
 			else
 			{
 				error_proc("epoll_wait");
+			}
+
+			for(i=0; i<ready; i++)
+			{
+				if(events[i].data.fd=listen_file_descriptor) /* accept a client */
+				{
+					connect_file_descriptor = accept(listen_file_descriptor, (struct sockaddr*) &client_address, &client_address_len);
+					if(connect_file_descriptor == -1)
+					{
+						fprintf(stderr, "Accept ERROR \n");
+						continue;
+					}
+					fprintf(stderr, " A client is connected... \n");
+					events.data.fd = connect_file_descriptor;
+					if(epoll_ctl(epfd, EPOLL_CTL_ADD, connect_file_descriptor, &event) == -1)
+					{
+						error_proc("epoll_ctl");
+					}
+					else
+					{
+						/* run code */
+					}
+				}
 			}
 		}
 	}
@@ -79,12 +103,4 @@ void error_proc(const char* str)
 {
 	fprintf(stderr, "\n [%s]: [%s] \n", str, strerror(errno));
 	exit(1);
-}
-
-
-int main()
-{
-	create_epoll();
-	create_socket();
-	listen_epoll();
 }

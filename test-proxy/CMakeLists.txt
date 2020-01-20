@@ -7,6 +7,7 @@ set (SOURCE_FILE
 	"src/global_variables.c"
 	"src/log.c"
 	"src/packet.c"
+	"src/client.c"
 
 	"include/main.h"
 	"include/StdInc.h"
@@ -15,6 +16,8 @@ set (SOURCE_FILE
 	"include/global_variables.h"
 	"include/log.h"
 	"include/packet.h"
+	"include/client.h"
+	"include/proxy.h"
 )
 
 add_executable (test-proxy ${SOURCE_FILE})

@@ -3,7 +3,7 @@
 static int remove_list_last_server(struct server* target_server);
 static void server_free(struct server* target_server);
 
-/* server_list 전역 변수에 서버를 추가함 */
+/* Add server data to server_list */
 int add_server(const char* connection_string)
 {
 	char* port_start_pos = NULL;
