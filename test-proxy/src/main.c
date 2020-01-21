@@ -11,6 +11,9 @@ int main(int argc, const char** argv)
 		.connection_strings = { 0, }
 	};
 
+	struct epoll_event server_events[MAX_EVENTS] = { 0, };
+	int server_epoll_fd = -1;
+
 	/* Initializing */
 	if (log_init() != LOG_INIT_SUCCESS)
 	{
@@ -34,10 +37,19 @@ int main(int argc, const char** argv)
 		main_free(&server_list);
 		return 0;
 	}
+
+	if ((server_epoll_fd = epoll_create(MAX_EVENTS)) == -1)
+	{
+		main_free(&server_list);
+		return 0;
+	}
 	/* */
 	
 	/* Main logic write in here */
-
+	while (1)
+	{
+		servers_polling(server_epoll_fd, &server_list, &server_events);
+	}
 	/* */
 
 	/* Free allocated memories */
