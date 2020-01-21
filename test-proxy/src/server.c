@@ -145,6 +145,18 @@ void reset_server_list(struct vector* dest)
 	vector_clear(dest);
 }
 
+void server_packet_received(struct server* server, unsigned char* packet)
+{
+	/* Require packet receive handling client.c */
+	struct iphdr* ip_header = (struct iphdr*)packet;
+	/*
+	struct client* dest_client = get_client_from_address(ip_header->daddr);
+
+	client_packet_receive_handler(dest_client, server, packet);
+	*/
+
+}
+
 void send_packet_to_server(struct server* dst_server, unsigned char* packet)
 {
 	change_packet_address(packet, &dst_server->socket_address, PACKET_ADDR_CHANGE_TYPE_DEST);
