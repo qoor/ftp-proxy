@@ -53,9 +53,7 @@ int get_option_from_argument(struct option* dest, int argc, const char** argv)
 			if (strcmp(argv[option_index + 1], "debugging") == 0) /* Proccessing `setting` command */
 			{
 				/* Functions for debugging */
-				create_epoll();
-				create_socket();
-				listen_epoll();
+				epoll();
 				return ARGUMENT_SUCCESS;
 			}
 			else
