@@ -79,4 +79,12 @@ enum vector_error_type
 };
 /* */
 
+/* HASHMAP RETURN CODE DEFINE */
+enum hashmap_error_type
+{
+	HASHMAP_SUCCESS,
+	HASHMAP_INVALID,
+	HASHMAP_INVALID_KEY
+}
+
 #endif
