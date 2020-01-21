@@ -11,13 +11,15 @@
 #include <errno.h>
 #include <pthread.h>
 
+#include <arpa/inet.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/epoll.h>
 #include <sys/socket.h>
-#include <sys/types.h>
+#include <sys/types.h> /* uintx_t */
 #include <sys/time.h>
 
+#include <netinet/in.h>
 #include <netinet/ip.h>
 
 #include <linux/tcp.h>
