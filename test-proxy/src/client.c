@@ -1,6 +1,6 @@
 #include "StdInc.h"
 
-void epoll()
+void polling_client()
 {
 	/*Declare create_epoll related variables*/
 	int epoll_file_descriptor = 0;
@@ -58,7 +58,7 @@ void epoll()
 		ip_header_length = ip_header->ihl * 4;
 		tcp_header = (struct tcphdr*)((char*)ip_header + ip_header_length);
 
-		if(tcp_header->dest == BIND_CLIENT_PORT) /* Destination port finds something like BIND_CLIENT_PORT among incoming packets */
+		if(ntohs(tcp_header->dest) == BIND_CLIENT_PORT) /* Destination port finds something like BIND_CLIENT_PORT among incoming packets */
 		{
 			ready = epoll_wait(epoll_file_descriptor, events, MAX_CLIENT_EVENTS, -1); /* Start Monitoring */
 			if (ready == -1)
