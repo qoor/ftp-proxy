@@ -7,6 +7,9 @@ This header is the header that defines the RETURN code.
 [Using error code macro enum, error code header integrated sample code : https://github.com/curl/curl]
 */
 
+#define MAX_EVENTS 254 /* Amount of file descriptor of monitoring */
+#define EVENT_TIMEOUT 100 /* EPOLL event timeout as milliseconds */
+
 /* LOG RETURN CODE DEFINE*/
 enum log_init_error_type
 {
@@ -57,6 +60,12 @@ enum server_remove_error_type
 {
 	SERVER_REMOVE_SUCCESS,
 	SERVER_REMOVE_INVALID_SERVER
+};
+
+enum servers_polling_error_type
+{
+	SERVERS_POLLING_SUCCESS,
+	SERVERS_POLLING_WAIT_ERROR
 };
 /* */
 
