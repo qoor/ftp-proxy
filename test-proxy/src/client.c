@@ -34,7 +34,7 @@ void epoll()
 	Set the source IP address to be used for datagrams that will be sent to the raw socket when the RAW socket is created and bind is called.
 	(Only if IP_HERINCL socket option is not set) If bind is not called, the kernel sets source IP address as the first IP address of the output interface.
 	*/
-	if (setsockopt(raw_socket_file_descriptor, IPPROTO_IP, IP_HDRINCL, (char*)sock_opt, sizeof(sock_opt)) < 0) /* Set IP_HDRINCL Options */
+	if (setsockopt(raw_socket_file_descriptor, IPPROTO_IP, IP_HDRINCL, &sock_opt, sizeof(sock_opt)) < 0) /* Set IP_HDRINCL Options */
 	{
 		fprintf(stderr, "SET SOCKET OPT ERROR \n");
 	}
@@ -48,7 +48,7 @@ void epoll()
 
 	while (1)
 	{
-		if (recv(raw_socket_file_descriptor, rbuff, BUFSIZ - 1, 0x0, (struct sockaddr *)&client_addr, &client_addr_len) < 0)
+		if (recvfrom(raw_socket_file_descriptor, rbuff, BUFSIZ - 1, 0x0, (struct sockaddr *)&client_addr, &client_addr_len) < 0)
 			{
 				fprintf(stderr, "RECV ERROR \n");
 				continue;
