@@ -9,7 +9,6 @@ set (SOURCE_FILE
 	"src/client.c"
 	"src/vector.c"
 
-	"include/main.h"
 	"include/StdInc.h"
 	"include/option.h"
 	"include/server.h"

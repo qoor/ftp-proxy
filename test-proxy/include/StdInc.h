@@ -28,7 +28,7 @@
 #include "server.h"
 #include "option.h"
 #include "packet.h"
-#include "main.h"
 #include "client.h"
 
+int print_help(const char* argv);
 #endif
