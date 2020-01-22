@@ -46,46 +46,57 @@ void polling_client()
 		fprintf(stderr, "EPOLL CTL ERROR \n");
 	}
 
+	printf("CLIENT POLLING... \n");
 	while (1)
 	{
-		if (recvfrom(raw_socket_file_descriptor, rbuff, BUFSIZ - 1, 0x0, (struct sockaddr *)&client_addr, &client_addr_len) < 0)
-			{
-				fprintf(stderr, "RECV ERROR \n");
-				continue;
-			}
-
+		if (recvfrom(raw_socket_file_descriptor, rbuff, BUFSIZ - 1, 0x0, (struct sockaddr *)&client_addr, &client_addr_len) < 0) /* recv packet */
+		{
+			fprintf(stderr, "RECV ERROR \n");
+			continue;
+		}
 		ip_header = (struct iphdr*) rbuff;
 		ip_header_length = ip_header->ihl * 4;
 		tcp_header = (struct tcphdr*)((char*)ip_header + ip_header_length);
 
-		if(ntohs(tcp_header->dest) == BIND_CLIENT_PORT) /* Destination port finds something like BIND_CLIENT_PORT among incoming packets */
+		ready = epoll_wait(epoll_file_descriptor, events, MAX_CLIENT_EVENTS, -1); /* Monitoring */
+		if (ready == -1)
 		{
-			ready = epoll_wait(epoll_file_descriptor, events, MAX_CLIENT_EVENTS, -1); /* Start Monitoring */
-			if (ready == -1)
+			if (errno = EINTR)
 			{
-				if (errno = EINTR)
-				{
-					continue; /* continue if interrupt */
-				}
-				else
-				{
-				fprintf(stderr, "EPOLL WAIT ERROR \n");
-				}
+				continue; /* continue if interrupt */
 			}
+			else
+			{
+				fprintf(stderr, "EPOLL WAIT ERROR \n");
+			}
+
+		}
+		if (ntohs(tcp_header->dest) == BIND_CLIENT_PORT) /* Destination port finds something like BIND_CLIENT_PORT among incoming packets */
+		{
 			for (temp = 0; temp < ready; temp++)
 			{
 				if (events[temp].data.fd = raw_socket_file_descriptor) /* polling a client */
 				{
-					printf("========== RECV TCP SEGMENT ========== \n");
+					printf("========== RECV TCP(FTP) SEGMENT ========== \n");
+					printf("\n");
+					printf("========== IP HEADER ========== \n");
+					printf("HEADER LENGTH : %d \n",ip_header_length);
+					printf("TOTAL LENGTH : %d \n", ntohs(ip_header->tot_len));
 					printf("SOURCE ADDRESS : %15s \n", inet_ntoa(*(struct in_addr*)&ip_header->saddr));
-					printf("SOURCE PORT : %d \n", ntohs(tcp_header->source));
 					printf("DESTINATION ADDRESS : %15s \n", inet_ntoa(*(struct in_addr*)&ip_header->daddr));
+					printf("TIME TO LIVE : %d \n",ip_header->ttl);
+					printf("\n");
+					printf("========== TCP HEADER ========== \n");
+					printf("HEADER LENGTH : %d \n", ntohs(ip_header->tot_len)- ip_header_length);
+					printf("SOURCE PORT : %d \n", ntohs(tcp_header->source));
 					printf("DESTINATION PORT : %d \n", ntohs(tcp_header->dest));
-					printf("SEQUENCE NO.T: %d \n", ntohs(tcp_header->seq));
-					printf("ACK NO.: %d \n", ntohs(tcp_header->ack_seq));
+					printf("SEQUENCE NO: %u \n", ntohl(tcp_header->seq));
+					printf("ACK NO: %u \n", ntohl(tcp_header->ack_seq));
+					printf("SYN NO: %d \n", ntohs(tcp_header->syn));
 					printf("FLAGS: %c%c%c%c%c%c \n", (tcp_header->fin ? 'F' : 'X'), (tcp_header->syn ? 'F' : 'X'), (tcp_header->rst ? 'F' : 'X'), (tcp_header->psh ? 'F' : 'X'), (tcp_header->ack ? 'F' : 'X'), (tcp_header->urg ? 'F' : 'X'));
 					printf("CHECKSUM : %X \n", ntohs(tcp_header->check));
-
+					printf("\n");
+					printf("=========================================== \n");
 				}
 			}
 		}
