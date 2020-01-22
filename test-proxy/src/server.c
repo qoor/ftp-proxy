@@ -2,7 +2,6 @@
 
 #include <fcntl.h>
 
-static int remove_list_last_server(struct vector* dest);
 static void server_free(struct server* target_server);
 
 /* Add server to destination from connection strings */
@@ -106,25 +105,6 @@ int add_server(struct vector* dest, const char* connection_string)
 	return SERVER_ADD_SUCCESS;
 }
 
-/*
- * Remove the back of listed server from list (Internal)
- * target_server MUST be in server_list
-*/
-int remove_list_last_server(struct vector* dest)
-{
-	struct server* target_server = NULL;
-
-	if (dest == NULL || (target_server = vector_get(dest, dest->size - 1)) == NULL)
-	{
-		return SERVER_REMOVE_INVALID_SERVER;
-	}
-
-	server_free(target_server);
-	vector_pop_back(dest);
-
-	return SERVER_REMOVE_SUCCESS;
-}
-
 static void server_free(struct server* target_server)
 {
 	if (target_server->epoll_fd != -1)
@@ -165,8 +145,7 @@ void reset_server_list(struct vector* dest)
 void server_packet_received(const struct server* server, unsigned char* packet)
 {
 	/* Require packet receive handling client.c */
-	struct iphdr* ip_header = (struct iphdr*)packet;
-	/*
+	/*struct iphdr* ip_header = (struct iphdr*)packet;
 	struct client* dest_client = get_client_from_address(ip_header->daddr);
 
 	client_packet_receive_handler(dest_client, server, packet);
@@ -179,18 +158,16 @@ void send_packet_to_server(struct server* dst_server, unsigned char* packet)
 	sendto(dst_server->socket_fd, packet, ((struct iphdr*)packet)->tot_len, 0x0, (struct sockaddr*)&dst_server->socket_address, sizeof(struct sockaddr));
 }
 
-int servers_polling(int epoll_fd, const struct vector* server_list, struct epoll_event* events)
+int servers_polling(int epoll_fd, const struct vector* server_list, struct epoll_event** events)
 {
 	int active_events = 0;
 	int eventid = 0;
 	int epoll_errno = 0;
-	int flags = 0;
 	struct server* server_ptr = NULL;
 	struct iphdr ip_header = { 0, };
 	unsigned char* packet = NULL;
-	struct sockaddr_in connector_address;
 
-	active_events = epoll_wait(epoll_fd, events, MAX_EVENTS, EVENT_TIMEOUT);
+	active_events = epoll_wait(epoll_fd, *events, MAX_EVENTS, EVENT_TIMEOUT);
 
 	if (active_events == -1 && (epoll_errno = errno) != EINTR)
 	{
@@ -200,10 +177,10 @@ int servers_polling(int epoll_fd, const struct vector* server_list, struct epoll
 	for (eventid = 0; eventid < active_events; ++eventid)
 	{
 		server_ptr = NULL;
-		memset(&ip_header, 0x00, sizeof(struct iphdr*));
+		memset(&ip_header, 0x00, sizeof(struct iphdr));
 		packet = NULL;
 
-		if ((server_ptr = get_server_from_fd(server_list, events[eventid].data.fd)) == NULL)
+		if ((server_ptr = get_server_from_fd(server_list, events[eventid]->data.fd)) == NULL)
 		{
 			/* Invalid socket descriptor */
 			continue;
@@ -221,7 +198,7 @@ int servers_polling(int epoll_fd, const struct vector* server_list, struct epoll
 			continue;
 		}
 
-		strncpy(packet, (char*)&ip_header, 20);
+		strncpy((char*)packet, (char*)&ip_header, 20);
 
 		if (recv(server_ptr->socket_fd, packet + 20, ip_header.tot_len - 20, 0) < ip_header.tot_len - 20)
 		{
@@ -233,6 +210,8 @@ int servers_polling(int epoll_fd, const struct vector* server_list, struct epoll
 
 		free(packet);
 	}
+
+	return SERVERS_POLLING_SUCCESS;
 }
 
 struct server* get_server_from_fd(const struct vector* server_list, int fd)

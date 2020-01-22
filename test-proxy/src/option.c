@@ -105,7 +105,6 @@ int get_option_from_file(struct option* dest)
 	char* current_pos;
 	char config_key[MAX_CONFIG_KEY_LENGTH];
 	int key_len;
-	int option_mode = 0;
 	int ret = 1;
 
 	if (!file)

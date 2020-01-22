@@ -85,6 +85,6 @@ enum hashmap_error_type
 	HASHMAP_SUCCESS,
 	HASHMAP_INVALID,
 	HASHMAP_INVALID_KEY
-}
+};
 
 #endif

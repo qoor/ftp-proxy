@@ -6,7 +6,7 @@ void change_packet_address(unsigned char* target_packet, const struct sockaddr_i
 	struct iphdr* ip_header = (struct iphdr*)target_packet;
 	int ip_header_length = 0;
 	struct tcphdr* tcp_header = NULL;
-	struct tcpcksumhdr tcp_cksum_header = { 0, };
+	struct tcpcksumhdr tcp_cksum_header = { {0, }, };
 
 	if (target_packet == NULL)
 	{

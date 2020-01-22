@@ -190,4 +190,6 @@ int vector_clear(struct vector* vector)
 
 	memset(vector->container, 0x00, vector->capacity * sizeof(void*));
 	vector->size = 0;
+
+	return VECTOR_SUCCESS;
 }

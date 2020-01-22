@@ -2,34 +2,32 @@
 #define __HASHMAP_H__
 
 #define DEFAULT_HASHMAP_SIZE 256
-
-enum hashmap_key_type
-{
-	HASHMAP_KEY_TYPE_INT,
-	HASHMAP_KEY_TYPE_DOUBLE,
-	HASHMAP_KEY_TYPE_STRING
-};
+#define MIN_CAPACITY_CALC(capacity) ((capacity) * 4 / 3)
 
 struct hashmap_element
 {
 	void* key;
+	int hash;
 	void* value;
+	struct hashmap_element* next;
 };
 
 struct hashmap
 {
-	int key_type;
-	int table_size;
-	int size;
-	struct hashmap_element* data;
-
+	size_t capacity;
+	size_t size;
+	struct hashmap_element** element_containers;
+	int (*hash_function)(void* key);
+	int (*equals)(void* key1, void* key2);
 };
 
-struct hashmap* hashmap_init();
-int hashmap_insert(struct hashmap* map, void* key, void* value);
-int hashmap_insert_int(struct hashmap* map, int key, int value);
+struct hashmap* hashmap_init(size_t capacity, int hash_function(void*), int (*equals)(void*, void*));
+void* hashmap_insert(struct hashmap* map, void* key, void* value);
+void hashmap_foreach(struct hashmap* map, int (*callback)(void* key, void* value, void* context), void* context);
+void* hashmap_erase(struct hashmap* map, void* key);
 void hashmap_free(struct hashmap* map);
-
-int generate_hash(struct hashmap* map, void* key);
+int hashmap_hash(void* key, size_t key_size);
+int hashmap_hash_int(void* key);
+int hashmap_equals_int(void* key1, void* key2);
 
 #endif

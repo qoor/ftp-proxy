@@ -5,13 +5,12 @@ static void main_free();
 int main(int argc, const char** argv)
 {
 	struct vector server_list = { 0, };
-	int server_count = 0;
 
 	struct option option = {
 		.connection_strings = { 0, }
 	};
 
-	struct epoll_event server_events[MAX_EVENTS] = { 0, };
+	struct epoll_event server_events[MAX_EVENTS] = { { 0, }, };
 	int server_epoll_fd = -1;
 
 	/* Initializing */
@@ -48,7 +47,7 @@ int main(int argc, const char** argv)
 	/* Main logic write in here */
 	while (1)
 	{
-		servers_polling(server_epoll_fd, &server_list, &server_events);
+		servers_polling(server_epoll_fd, &server_list, (struct epoll_event**)&server_events);
 	}
 	/* */
 

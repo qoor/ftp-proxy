@@ -2,7 +2,7 @@
 
 project ("test-proxy")
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c90")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c90 -Wall")
 
 add_subdirectory ("test-proxy")
 
