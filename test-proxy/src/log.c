@@ -11,6 +11,8 @@
 #include "proxy.h"
 
 static FILE* log_file = NULL;
+/* Used to buffer length check to prevent buffer overflow */
+static FILE* log_message_size_check_file = NULL;
 static char* log_buffer = NULL;
 
 static pthread_mutex_t logfile_mutex;
@@ -35,6 +37,12 @@ int log_init(void)
         return LOG_INIT_FILE_OPEN_FAILED;
     }
 
+	log_message_size_check_file = fopen("/dev/null", "w");
+	if (log_message_size_check_file == NULL)
+	{
+		return LOG_INIT_FILE_OPEN_FAILED;
+	}
+
 	log_buffer = (char*)malloc(MAX_LOG_MESSAGE_SIZE * sizeof (char));
 	if (log_buffer == NULL)
 	{
@@ -55,6 +63,13 @@ int log_write(const char* message, ...)
 	struct tm* local_time = NULL;
 	va_list args;
 	size_t buffer_length = 0;
+	const char* log_format = "[%04d-%02d-%02d %02d:%02d:%02d.%03d] %s";
+	static FILE* null_file = NULL;
+
+	if (null_file == NULL && (null_file = fopen("/dev/null", "w+")) == NULL)
+	{
+		return LOG_WRITE_NO_HANDLE;
+	}
 
 	if (message == NULL)
 	{
@@ -74,22 +89,46 @@ int log_write(const char* message, ...)
 	local_time = localtime(&time);
 
 	pthread_mutex_lock(&logfile_mutex);
+
+	/* Buffer length check before write buffer to prevent buffer overflow */
+	buffer_length = fprintf(null_file, log_format, local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
+		local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm, message);
+	if (buffer_length >= MAX_LOG_MESSAGE_SIZE)
+	{
+		return LOG_WRITE_INVALID_MESSAGE;
+	}
+	/* */
+
 	/* 
 	 * Write log
 	 * Ex) [2020-01-17 13:46:00.000] Hello World!
 	*/
 	sprintf(log_buffer,  "[%04d-%02d-%02d %02d:%02d:%02d.%03d] %s", local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
-	local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm, message);
-	vsprintf(log_buffer, log_buffer, args);
+		local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm, message);
+	/* */
 
-	buffer_length = strlen(log_buffer);
+	/* Also buffer length check with arguments */
+	va_start(args, log_buffer);
+	buffer_length = vfprintf(null_file, log_buffer, args);
+	va_end(args);
 	if (buffer_length >= MAX_LOG_MESSAGE_SIZE)
 	{
-		log_buffer[MAX_LOG_MESSAGE_SIZE - 1] = '\0';
-		buffer_length = MAX_LOG_MESSAGE_SIZE;
+		memset(log_buffer, 0x00, MAX_LOG_MESSAGE_SIZE);
+		pthread_mutex_unlock(&logfile_mutex);
+		return LOG_WRITE_INVALID_MESSAGE;
 	}
+	/* */
 
+	/* Argument push to buffer */
+	va_start(args, log_buffer);
+	vsprintf(log_buffer, log_buffer, args);
+	va_end(args);
+	/* */
+
+	/* Write buffer result to log file */
 	fwrite(log_buffer, sizeof(char), strlen(log_buffer), log_file);
+	/* */
+
 	/* */
 	pthread_mutex_unlock(&logfile_mutex);
 
@@ -106,6 +145,11 @@ void log_free(void)
 		fclose(log_file);
 	}
 
+	if (log_message_size_check_file != NULL)
+	{
+		fclose(log_message_size_check_file);
+	}
+
 	if (log_buffer != NULL)
 	{
 		free(log_buffer);
@@ -113,6 +157,7 @@ void log_free(void)
 
 	log_file = NULL;
 	log_buffer = NULL;
+	log_message_size_check_file = NULL;
 
 	pthread_mutex_unlock(&logfile_mutex);
 }
