@@ -1,18 +1,21 @@
 #include "StdInc.h"
 
+
 void polling_client()
 {
 	/*Declare create_epoll related variables*/
 	int epoll_file_descriptor = 0;
 	/*Create_raw_socket related variable declaration*/
-	int raw_socket_file_descriptor = 0, client_addr_len = 0, sock_opt = 1;
-	struct in_addr proxy = { 0, };
-	struct sockaddr_in raw_addr = { 0, }, client_addr = { 0, };
+	int raw_socket_file_descriptor = 0;
+	int client_addr_len = 0;
+	int sock_opt = 1;
+	struct sockaddr_in client_addr = { 0, };
 	char rbuff[BUFSIZ] = { 0, };
 	/*declaration of variables associated with listen_epoll*/
 	struct epoll_event event = { 0, };
-	struct epoll_event events[MAX_CLIENT_EVENTS] = { 0, };
-	int ready = 0, temp = 0;
+	struct epoll_event events[MAX_CLIENT_EVENTS] = { {0,}, };
+	int ready = 0;
+	int temp = 0;
 	/* declaration of packet-related variables */
 	int ip_header_length = 0;
 	struct iphdr* ip_header = NULL;
@@ -30,6 +33,8 @@ void polling_client()
 	{
 		fprintf(stderr, "RAW SOCKET CREATE ERROR");
 	}
+	
+
 	/*
 	Set the source IP address to be used for datagrams that will be sent to the raw socket when the RAW socket is created and bind is called.
 	(Only if IP_HERINCL socket option is not set) If bind is not called, the kernel sets source IP address as the first IP address of the output interface.
@@ -49,7 +54,7 @@ void polling_client()
 	printf("CLIENT POLLING... \n");
 	while (1)
 	{
-		if (recvfrom(raw_socket_file_descriptor, rbuff, BUFSIZ - 1, 0x0, (struct sockaddr *)&client_addr, &client_addr_len) < 0) /* recv packet */
+		if (recvfrom(raw_socket_file_descriptor, rbuff, BUFSIZ - 1, 0x0, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len) < 0) /* recv packet */
 		{
 			fprintf(stderr, "RECV ERROR \n");
 			continue;
@@ -61,7 +66,7 @@ void polling_client()
 		ready = epoll_wait(epoll_file_descriptor, events, MAX_CLIENT_EVENTS, -1); /* Monitoring */
 		if (ready == -1)
 		{
-			if (errno = EINTR)
+			if (errno == EINTR)
 			{
 				continue; /* continue if interrupt */
 			}
@@ -75,19 +80,22 @@ void polling_client()
 		{
 			for (temp = 0; temp < ready; temp++)
 			{
-				if (events[temp].data.fd = raw_socket_file_descriptor) /* polling a client */
+				if (events[temp].data.fd == raw_socket_file_descriptor) /* polling a client */
 				{
+					printf("epoll_file_descriptor : %d \n", epoll_file_descriptor);
+					printf("raw_socket_file_descriptor : %d \n", raw_socket_file_descriptor);
+
 					printf("========== RECV TCP(FTP) SEGMENT ========== \n");
 					printf("\n");
 					printf("========== IP HEADER ========== \n");
-					printf("HEADER LENGTH : %d \n",ip_header_length);
+					printf("HEADER LENGTH : %d \n", ip_header_length);
 					printf("TOTAL LENGTH : %d \n", ntohs(ip_header->tot_len));
 					printf("SOURCE ADDRESS : %15s \n", inet_ntoa(*(struct in_addr*)&ip_header->saddr));
 					printf("DESTINATION ADDRESS : %15s \n", inet_ntoa(*(struct in_addr*)&ip_header->daddr));
-					printf("TIME TO LIVE : %d \n",ip_header->ttl);
+					printf("TIME TO LIVE : %d \n", ip_header->ttl);
 					printf("\n");
 					printf("========== TCP HEADER ========== \n");
-					printf("HEADER LENGTH : %d \n", ntohs(ip_header->tot_len)- ip_header_length);
+					printf("HEADER LENGTH : %d \n", ntohs(ip_header->tot_len) - ip_header_length);
 					printf("SOURCE PORT : %d \n", ntohs(tcp_header->source));
 					printf("DESTINATION PORT : %d \n", ntohs(tcp_header->dest));
 					printf("SEQUENCE NO: %u \n", ntohl(tcp_header->seq));
