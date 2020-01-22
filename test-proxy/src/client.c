@@ -103,3 +103,4 @@ void polling_client()
 	}
 	close(raw_socket_file_descriptor);
 	close(epoll_file_descriptor);
+}
