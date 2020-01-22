@@ -4,10 +4,10 @@ static void main_free();
 
 int main(int argc, const char** argv)
 {
-	struct vector server_list = { 0, };
+	struct vector* server_list = NULL;
 
 	struct option option = {
-		.connection_strings = { 0, }
+		.connection_strings = NULL
 	};
 
 	struct epoll_event server_events[MAX_EVENTS] = { { 0, }, };
@@ -19,7 +19,7 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
-	if (vector_init(&option.connection_strings, 0) != VECTOR_SUCCESS || vector_init(&server_list, 0) != VECTOR_SUCCESS)
+	if ((option.connection_strings = vector_init(0)) == NULL || (server_list = vector_init(0)) == NULL)
 	{
 		main_free(&server_list);
 		return 0;
@@ -31,7 +31,7 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
-	if (add_servers_from_vector(&server_list, &option.connection_strings) != SERVER_ADD_SUCCESS)
+	if (add_servers_from_vector(server_list, option.connection_strings) != SERVER_ADD_SUCCESS)
 	{
 		main_free(&server_list);
 		return 0;
@@ -47,7 +47,7 @@ int main(int argc, const char** argv)
 	/* Main logic write in here */
 	while (1)
 	{
-		servers_polling(server_epoll_fd, &server_list, (struct epoll_event**)&server_events);
+		servers_polling(server_epoll_fd, server_list, (struct epoll_event**)&server_events);
 	}
 	/* */
 

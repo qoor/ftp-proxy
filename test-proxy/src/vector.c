@@ -1,10 +1,35 @@
 #include "StdInc.h"
 
-int vector_init(struct vector* vector, size_t capacity)
+static void expand_if_necessary(struct vector* vector)
 {
+	size_t new_capacity = 0;
+	void** new_container = NULL;
+
+	if (vector->size <= MIN_CAPACITY_CALC(vector->capacity))
+	{
+		return;
+	}
+
+	new_capacity = vector->capacity << 1;
+	if ((new_container = (void**)calloc(new_capacity, sizeof(void*))) == NULL)
+	{
+		return;
+	}
+
+	memcpy((void*)new_container, (void*)vector->container, vector->size);
+	vector->container = new_container;
+}
+
+struct vector* vector_init(size_t capacity)
+{
+	struct vector* vector = (struct vector*)malloc(sizeof(struct vector));
+	size_t min_capacity = 0;
+
 	if (vector == NULL)
 	{
-		return VECTOR_INVALID;
+		errno = VECTOR_ALLOC_FAILED;
+
+		return NULL;
 	}
 
 	if (capacity == 0)
@@ -12,17 +37,26 @@ int vector_init(struct vector* vector, size_t capacity)
 		capacity = DEFAULT_VECTOR_CAPACITY;
 	}
 
-	if ((vector->container = (void**)malloc(capacity * sizeof(void*))) == NULL)
+	vector->capacity = 1;
+	min_capacity = MIN_CAPACITY_CALC(capacity);
+
+	while (vector->capacity <= min_capacity)
 	{
-		return VECTOR_ALLOC_FAILED;
+		vector->capacity <<= 1;
 	}
 
-	memset(vector->container, 0x00, capacity * sizeof(void*));
+	if ((vector->container = (void**)calloc(capacity, sizeof(void*))) == NULL)
+	{
+		errno = VECTOR_ALLOC_FAILED;
+
+		free(vector);
+		return NULL;
+	}
 
 	vector->capacity = capacity;
 	vector->size = 0;
 
-	return VECTOR_SUCCESS;
+	return vector;
 }
 
 int vector_insert(struct vector* vector, int index, void* object)
@@ -39,17 +73,13 @@ int vector_insert(struct vector* vector, int index, void* object)
 		return VECTOR_OUT_OF_BOUNDS;
 	}
 
-	if (vector->size + 1 > vector->capacity && vector_set_capacity(vector, vector->capacity * 2) != VECTOR_SUCCESS)
-	{
-		return VECTOR_ALLOC_FAILED;
-	}
-
 	for (i = vector->size - 1; i > index; ++i)
 	{
 		vector->container[i] = vector->container[i - 1];
 	}
-
 	vector->container[index] = object;
+	++vector->size;
+	expand_if_necessary(vector);
 
 	return VECTOR_SUCCESS;
 }
@@ -68,18 +98,12 @@ int vector_erase(struct vector* vector, int index)
 		return VECTOR_OUT_OF_BOUNDS;
 	}
 
-	if (vector->size + 1 > vector->capacity && vector_set_capacity(vector, vector->capacity * 2) != VECTOR_SUCCESS)
+	for (i = index; i < vector->size; ++i)
 	{
-		return VECTOR_ALLOC_FAILED;
+		vector->container[i] = vector->container[i + 1];
 	}
 
-	if (index > 0)
-	{
-		for (i = vector->size - 1; i >= index; ++i)
-		{
-			vector->container[i] = vector->container[i - 1];
-		}
-	}
+	vector->container[--vector->size] = NULL;
 
 	return VECTOR_SUCCESS;
 }
@@ -91,13 +115,9 @@ int vector_push_back(struct vector* vector, void* object)
 		return VECTOR_INVALID;
 	}
 
-	if (vector->size + 1 > vector->capacity && vector_set_capacity(vector, vector->capacity * 2) != VECTOR_SUCCESS)
-	{
-		return VECTOR_ALLOC_FAILED;
-	}
-
 	vector->container[vector->size] = object;
 	++vector->size;
+	expand_if_necessary(vector);
 
 	return VECTOR_SUCCESS;
 }
@@ -155,32 +175,6 @@ int vector_set(struct vector* vector, int index, void* object)
 	return VECTOR_SUCCESS;
 }
 
-int vector_set_capacity(struct vector* vector, size_t capacity)
-{
-	if (vector == NULL)
-	{
-		return VECTOR_INVALID;
-	}
-
-	if (capacity <= 0)
-	{
-		capacity = DEFAULT_VECTOR_CAPACITY;
-	}
-
-	if (vector->capacity != capacity)
-	{
-		vector->container = (void**)realloc(vector->container, capacity * sizeof(void*));
-		if (capacity > vector->capacity)
-		{
-			memset(vector->container + vector->capacity, 0x00, (capacity - vector->capacity) * sizeof(void*));
-		}
-
-		vector->capacity = capacity;
-	}
-
-	return VECTOR_SUCCESS;
-}
-
 int vector_clear(struct vector* vector)
 {
 	if (vector == NULL)
@@ -188,8 +182,30 @@ int vector_clear(struct vector* vector)
 		return VECTOR_INVALID;
 	}
 
-	memset(vector->container, 0x00, vector->capacity * sizeof(void*));
+	memset((void*)vector->container, 0x00, vector->capacity * sizeof(void*));
 	vector->size = 0;
+
+	return VECTOR_SUCCESS;
+}
+
+/*
+ * Memory free of vector
+ * This function will NOT free object automatically
+*/
+int vector_free(struct vector* vector)
+{
+	if (vector == NULL)
+	{
+		return VECTOR_INVALID;
+	}
+
+	if (vector->container != NULL)
+	{
+		free(vector->container);
+		vector->container = NULL;
+	}
+
+	free(vector);
 
 	return VECTOR_SUCCESS;
 }

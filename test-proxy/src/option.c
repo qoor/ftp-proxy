@@ -134,7 +134,7 @@ int get_option_from_file(struct option* dest)
 		if (keycmp(config_key, "server_address") == 0)
 		{
 			skip_whitespace(&current_pos);
-			vector_push_back(&dest->connection_strings, current_pos);
+			vector_push_back(dest->connection_strings, current_pos);
 		}
 		else
 		{

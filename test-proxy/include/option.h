@@ -3,7 +3,7 @@
 
 struct option
 {
-	struct vector connection_strings;
+	struct vector* connection_strings;
 };
 
 int get_options(struct option* dest, int argc, const char** argv);

@@ -2,7 +2,6 @@
 #define __HASHMAP_H__
 
 #define DEFAULT_HASHMAP_SIZE 256
-#define MIN_CAPACITY_CALC(capacity) ((capacity) * 4 / 3)
 
 struct hashmap_element
 {
