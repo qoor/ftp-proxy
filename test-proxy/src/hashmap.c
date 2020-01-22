@@ -2,7 +2,7 @@
 
 #include "hashmap.h"
 
-static int get_hash_key(struct hashmap* map, void* key)
+static int get_hash_key(const struct hashmap* map, void* key)
 {
 	int hash = map->hash_function(key);
 
@@ -136,8 +136,11 @@ void* hashmap_insert(struct hashmap* map, void* key, void* value)
 	void* old_value = NULL;
 	size_t index = 0;
 
+	errno = HASHMAP_SUCCESS;
+
 	if (map == NULL)
 	{
+		errno = HASHMAP_INVALID;
 		return NULL;
 	}
 
@@ -154,6 +157,7 @@ void* hashmap_insert(struct hashmap* map, void* key, void* value)
 		{
 			if ((current_map = create_element_container(key, hash_key, value)) == NULL)
 			{
+				errno = HASHMAP_ALLOC_FAILED;
 				return NULL;
 			}
 
@@ -174,9 +178,38 @@ void* hashmap_insert(struct hashmap* map, void* key, void* value)
 	}
 }
 
+void* hashmap_get(const struct hashmap* map, void* key)
+{
+	int hash_key = 0;
+	size_t index = 0;
+	struct hashmap_element* current_map = NULL;
+
+	if (map == NULL)
+	{
+		return NULL;
+	}
+
+	hash_key = get_hash_key(map, key);
+	index = get_index_from_hash_key(map->capacity, hash_key);
+
+	current_map = map->element_containers[index];
+
+	while (current_map != NULL)
+	{
+		if (equal_keys(current_map->key, current_map->hash, key, hash_key, map->equals) == 1)
+		{
+			return current_map->value;
+		}
+
+		current_map = current_map->next;
+	}
+
+	return NULL;
+}
+
 void hashmap_foreach(struct hashmap* map, int (*callback)(void* key, void* value, void* context), void* context)
 {
-	size_t i;
+	size_t i = 0;
 	struct hashmap_element* current_map = NULL;
 	struct hashmap_element* next_map = NULL;
 
@@ -213,6 +246,7 @@ void* hashmap_erase(struct hashmap* map, void* key)
 
 	if (map == NULL)
 	{
+		errno = HASHMAP_INVALID;
 		return NULL;
 	}
 
@@ -237,9 +271,9 @@ void* hashmap_erase(struct hashmap* map, void* key)
 	return NULL;
 }
 
-void hashmap_free(struct hashmap* map)
+void hashmap_clear(struct hashmap* map)
 {
-	size_t i;
+	size_t i = 0;
 	struct hashmap_element* current_map = NULL;
 	struct hashmap_element* next_map = NULL;
 
@@ -258,6 +292,18 @@ void hashmap_free(struct hashmap* map)
 			current_map = next_map;
 		}
 	}
+
+	map->size = 0;
+}
+
+void hashmap_free(struct hashmap* map)
+{
+	if (map == NULL)
+	{
+		return;
+	}
+
+	hashmap_clear(map);
 
 	free(map->element_containers);
 	free(map);

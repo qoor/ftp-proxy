@@ -1,10 +1,10 @@
 #include "StdInc.h"
 
-static void main_free();
+static void main_free(struct hashmap* server_list);
 
 int main(int argc, const char** argv)
 {
-	struct vector* server_list = NULL;
+	struct hashmap* server_list = NULL;
 
 	struct option option = {
 		.connection_strings = NULL
@@ -19,27 +19,33 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
-	if ((option.connection_strings = vector_init(0)) == NULL || (server_list = vector_init(0)) == NULL)
+	if ((option.connection_strings = vector_init(0)) == NULL)
 	{
-		main_free(&server_list);
+		main_free(server_list);
 		return 0;
 	}
 
 	if (get_options(&option, argc, argv) != OPTION_GET_SUCCESS)
 	{
-		main_free(&server_list);
+		main_free(server_list);
 		return 0;
 	}
 
 	if (add_servers_from_vector(server_list, option.connection_strings) != SERVER_ADD_SUCCESS)
 	{
-		main_free(&server_list);
+		main_free(server_list);
+		return 0;
+	}
+
+	if ((server_list = hashmap_init(option.connection_strings->size, hashmap_hash_int, hashmap_equals_int)) == NULL)
+	{
+		main_free(server_list);
 		return 0;
 	}
 
 	if ((server_epoll_fd = epoll_create(MAX_EVENTS)) == -1)
 	{
-		main_free(&server_list);
+		main_free(server_list);
 		return 0;
 	}
 	/* */
@@ -52,7 +58,7 @@ int main(int argc, const char** argv)
 	/* */
 
 	/* Free allocated memories */
-	main_free(&server_list);
+	main_free(server_list);
 	/* */
 
 	return 0;
@@ -73,7 +79,7 @@ int print_help(const char* argv)
 	return 0;
 }
 
-void main_free(struct vector* server_list)
+void main_free(struct hashmap* server_list)
 {
 	reset_server_list(server_list);
 	log_free();

@@ -22,8 +22,10 @@ struct hashmap
 
 struct hashmap* hashmap_init(size_t capacity, int hash_function(void*), int (*equals)(void*, void*));
 void* hashmap_insert(struct hashmap* map, void* key, void* value);
+void* hashmap_get(const struct hashmap* map, void* key);
 void hashmap_foreach(struct hashmap* map, int (*callback)(void* key, void* value, void* context), void* context);
 void* hashmap_erase(struct hashmap* map, void* key);
+void hashmap_clear(struct hashmap* map);
 void hashmap_free(struct hashmap* map);
 int hashmap_hash(void* key, size_t key_size);
 int hashmap_hash_int(void* key);

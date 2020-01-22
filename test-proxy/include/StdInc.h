@@ -25,6 +25,7 @@
 #include <linux/tcp.h>
 
 #include "vector.h"
+#include "hashmap.h"
 #include "proxy.h"
 #include "log.h"
 #include "server.h"
