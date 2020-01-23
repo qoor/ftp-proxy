@@ -1,4 +1,9 @@
-#include "StdInc.h"
+#include <stdio.h>
+
+#include <netinet/ip.h>
+#include <linux/tcp.h>
+
+#include "packet.h"
 
 /* Change type must be in range `enum packet_addr_change_type` */
 void change_packet_address(unsigned char* target_packet, const struct sockaddr_in* address, int change_type)

@@ -1,6 +1,16 @@
-#include "StdInc.h"
-
+#include <stdio.h>
 #include <fcntl.h>
+#include <errno.h>
+
+#include <netinet/ip.h>
+#include <netinet/in.h>
+#include <sys/epoll.h>
+
+#include "server.h"
+#include "vector.h"
+#include "hashmap.h"
+#include "proxy.h"
+#include "packet.h"
 
 static void server_free(struct server* target_server);
 

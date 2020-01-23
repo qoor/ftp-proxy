@@ -1,7 +1,7 @@
-#include "StdInc.h"
+#include <stdio.h>
 
-#define OPTION_FILE_NAME "proxy.cfg"
-#define MAX_CONFIG_KEY_LENGTH 32
+#include "proxy.h"
+#include "option.h"
 
 /*
  * Get all of types of option from arguments
@@ -97,10 +97,10 @@ int create_option_file(void)
 	return 0;
 }
 
-/* Get options from file (OPTION_FILE_NAME) */
+/* Get options from file (OPTION_FILE_PATH) */
 int get_option_from_file(struct option* dest)
 {
-	FILE* file = fopen(OPTION_FILE_NAME, "r");
+	FILE* file = fopen(OPTION_FILE_PATH, "r");
 	char data[4096];
 	char* current_pos;
 	char config_key[MAX_CONFIG_KEY_LENGTH];

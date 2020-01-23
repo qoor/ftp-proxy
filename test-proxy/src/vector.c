@@ -1,4 +1,10 @@
-#include "StdInc.h"
+#include <stdio.h>
+#include <errno.h>
+
+#include <sys/types.h>
+
+#include "vector.h"
+#include "proxy.h"
 
 static void expand_if_necessary(struct vector* vector)
 {
