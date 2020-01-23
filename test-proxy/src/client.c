@@ -1,5 +1,19 @@
-#include "StdInc.h"
+#include "client.h"
 
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <arpa/inet.h>
+#include <linux/tcp.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <sys/epoll.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h> /* uintx_t */
 
 void polling_client()
 {
