@@ -22,7 +22,7 @@ static int remove_server_loop(void* key, void* value, void* context)
 }
 
 /* Add server to destination from connection strings */
-int add_servers_from_vector(struct hashmap* dest, const struct vector* connection_strings)
+int add_servers_from_vector(struct hashmap* dest, const struct vector* connection_strings, int epoll_fd)
 {
 	int i = 0;
 	int server_count = 0;
@@ -48,7 +48,7 @@ int add_servers_from_vector(struct hashmap* dest, const struct vector* connectio
 			continue;
 		}
 
-		if ((ret = add_server(dest, current_string)))
+		if ((ret = add_server(dest, current_string, epoll_fd)))
 		{
 			break;
 		}
@@ -57,13 +57,18 @@ int add_servers_from_vector(struct hashmap* dest, const struct vector* connectio
 	return ret;
 }
 
-int add_server(struct hashmap* dest, const char* connection_string)
+int add_server(struct hashmap* dest, const char* connection_string, int epoll_fd)
 {
 	struct server* server_object = NULL;
 	char* colon_pos = NULL;
 	char* server_ip = NULL;
 	size_t address_length = 0;
 	int header_include = 1;
+	int flags = 0;
+	struct epoll_event epoll_event;
+
+	memset(&epoll_event, 0x00, sizeof(struct epoll_event));
+	epoll_event.events = EPOLLIN;
 
 	if (dest == NULL || (server_object = (struct server*)malloc(sizeof(struct server))) == NULL)
 	{
@@ -73,6 +78,7 @@ int add_server(struct hashmap* dest, const char* connection_string)
 	}
 
 	server_object->socket_fd = -1;
+	
 	if ((server_object->socket_address = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in))) == NULL)
 	{
 		server_free(server_object);
@@ -105,14 +111,15 @@ int add_server(struct hashmap* dest, const char* connection_string)
 
 	if ((server_object->socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1 ||
 		setsockopt(server_object->socket_fd, IPPROTO_IP, IP_HDRINCL, &header_include, sizeof(header_include)) == -1 ||
-		(server_object->epoll_fd = epoll_create(MAX_EVENTS)) == -1)
+		epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_object->socket_fd, &epoll_event));
 	{
 		server_free(server_object);
 
 		return SERVER_ADD_SOCKET_CREATE_FAILED;
 	}
 
-	fcntl(server_object->socket_fd, F_SETFL, O_NONBLOCK);
+	flags = fcntl(server_object->socket_fd, F_GETFL, 0);
+	fcntl(server_object->socket_fd, F_SETFL, flags & O_NONBLOCK);
 
 	hashmap_insert(dest, &server_object->socket_fd, server_object);
 	if (errno != HASHMAP_SUCCESS)
@@ -170,7 +177,7 @@ int servers_polling(int epoll_fd, const struct hashmap* server_list, struct epol
 	int eventid = 0;
 	int epoll_errno = 0;
 	struct server* server_ptr = NULL;
-	struct iphdr ip_header = { 0, };
+	static struct iphdr ip_header = { 0, };
 	unsigned char* packet = NULL;
 
 	active_events = epoll_wait(epoll_fd, *events, MAX_EVENTS, EVENT_TIMEOUT);
@@ -184,43 +191,62 @@ int servers_polling(int epoll_fd, const struct hashmap* server_list, struct epol
 	{
 		server_ptr = NULL;
 		memset(&ip_header, 0x00, sizeof(struct iphdr));
-		packet = NULL;
 
-		if ((server_ptr = get_server_from_fd(server_list, events[eventid]->data.fd)) == NULL)
+		if ((server_ptr = (struct server*)hashmap_get(server_list, &events[eventid]->data.fd)) == NULL)
 		{
 			/* Invalid socket descriptor */
 			continue;
 		}
 
-		if (recv(server_ptr->socket_fd, &ip_header, 20, 0) < 20)
+		if (get_packet_from_server(server_ptr, &ip_header, packet) != PACKET_SUCCESS)
 		{
-			/* Invalid packet */
-			continue;
-		}
-
-		if ((packet = (unsigned char*)malloc(ip_header.tot_len)) == NULL)
-		{
-			/* Packet memory allocation failed */
-			continue;
-		}
-
-		strncpy((char*)packet, (char*)&ip_header, 20);
-
-		if (recv(server_ptr->socket_fd, packet + 20, ip_header.tot_len - 20, 0) < ip_header.tot_len - 20)
-		{
-			/* Invalid packet */
+			/* Not valid packet */
 			continue;
 		}
 
 		server_packet_received(server_ptr, packet);
-
 		free(packet);
+		packet = NULL;
 	}
 
 	return SERVERS_POLLING_SUCCESS;
 }
 
-struct server* get_server_from_fd(const struct hashmap* server_list, int fd)
+int get_packet_from_server(const struct server* server, struct iphdr* ip_header, unsigned char* packet)
 {
-	return hashmap_get(server_list, &fd);
+	struct tcphdr* tcp_header = NULL;
+
+	if (recv(server->socket_fd, ip_header, 20, 0) < 20 || ip_header->tot_len < 40)
+	{
+		/* Invalid packet */
+		return PACKET_INVALID;
+	}
+
+	if ((packet = (unsigned char*)malloc(ip_header->tot_len)) == NULL)
+	{
+		/* Packet memory allocation failed */
+		return PACKET_ALLOC_FAILED;
+	}
+
+	memcpy((char*)packet, (char*)&ip_header, sizeof(char));
+	if (recv(server->socket_fd, packet + 20, 20, 0) < 20)
+	{
+		/* Failed to try receiving TCP Header */
+		return PACKET_INVALID;
+	}
+
+	tcp_header = (struct tcphdr*)packet + 20;
+	if (tcp_header->source != FTP_COMMAND_PORT && tcp_header->source != FTP_DATA_PORT)
+	{
+		/* Is not a FTP packet */
+		return PACKET_INVALID;
+	}
+
+	if (recv(server->socket_fd, packet + 40, ip_header->tot_len - 40, 0) < ip_header->tot_len - 40)
+	{
+		/* Invalid packet */
+		return PACKET_INVALID;
+	}
+
+	return PACKET_SUCCESS;
 }
