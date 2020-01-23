@@ -1,3 +1,5 @@
+#include "log.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <time.h>
@@ -7,7 +9,6 @@
 #include <sys/timeb.h>
 #include <pthread.h>
 
-#include "log.h"
 #include "proxy.h"
 
 static FILE* log_file = NULL;

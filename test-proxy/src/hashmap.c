@@ -1,7 +1,7 @@
 #include "hashmap.h"
 
-#include <malloc.h>
 #include <errno.h>
+#include <malloc.h>
 
 #include "proxy.h"
 

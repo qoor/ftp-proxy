@@ -2,7 +2,6 @@
     "editor.codeLens": true,
     "files.associations": {
         "time.h": "c",
-        "stdinc.h": "c",
         "tcp.h": "c",
         "ip.h": "c",
         "byteorder.h": "c",

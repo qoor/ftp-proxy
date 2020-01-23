@@ -10,7 +10,6 @@ set (SOURCE_FILE
 	"src/vector.c"
 	"src/hashmap.c"
 
-	"include/StdInc.h"
 	"include/option.h"
 	"include/server.h"
 	"include/log.h"

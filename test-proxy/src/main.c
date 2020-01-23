@@ -1,4 +1,17 @@
-#include "StdInc.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
+#include <malloc.h>
+
+#include "client.h"
+#include "hashmap.h"
+#include "server.h"
+#include "log.h"
+#include "option.h"
+#include "packet.h"
+#include "proxy.h"
+#include "vector.h"
+
 
 static void main_free(struct hashmap* server_list);
 
