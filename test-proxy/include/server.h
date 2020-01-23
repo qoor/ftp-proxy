@@ -1,6 +1,11 @@
 #ifndef __SERVER_H__
 #define __SERVER_H__
 
+#include <sys/epoll.h>
+
+#include "vector.h"
+#include "hashmap.h"
+
 /* Server info structure */
 struct server
 {

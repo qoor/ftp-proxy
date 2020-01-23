@@ -1,7 +1,10 @@
-#include "StdInc.h"
+#include <stdio.h>
+#include <string.h>
 
-#define OPTION_FILE_NAME "proxy.cfg"
-#define MAX_CONFIG_KEY_LENGTH 32
+#include "proxy.h"
+#include "option.h"
+#include "client.h"
+#include "vector.h"
 
 /*
  * Get all of types of option from arguments
@@ -97,10 +100,10 @@ int create_option_file(void)
 	return 0;
 }
 
-/* Get options from file (OPTION_FILE_NAME) */
+/* Get options from file (OPTION_FILE_PATH) */
 int get_option_from_file(struct option* dest)
 {
-	FILE* file = fopen(OPTION_FILE_NAME, "r");
+	FILE* file = fopen(OPTION_FILE_PATH, "r");
 	char data[4096];
 	char* current_pos;
 	char config_key[MAX_CONFIG_KEY_LENGTH];
@@ -167,5 +170,20 @@ void skip_whitespace(char** data)
 int keycmp(const char* target, const char* original_key)
 {
 	return strncmp(target, original_key, strlen(original_key));
+}
+
+/* Print help */
+/*
+Do not use argv[0] as a factor.
+Argv[0] should not be used as a printf factor because argv[0] is already passed as a factor when calling the print_help function.
+It cause Segmentation fault
+*/
+int print_help(const char* argv)
+{
+	printf("---------- Help ----------\n");
+	printf("Usage: %s \n", argv);
+	printf("debugging: %s -c debugging [Developer Only] \n", argv);
+	printf("Help: %s -h \n", argv);
+	return 0;
 }
 

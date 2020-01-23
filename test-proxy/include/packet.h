@@ -1,6 +1,8 @@
 #ifndef __PACKET_H__
 #define __PACKET_H__
 
+#include <linux/tcp.h>
+
 enum packet_addr_change_type
 {
 	PACKET_ADDR_CHANGE_TYPE_SOURCE,
