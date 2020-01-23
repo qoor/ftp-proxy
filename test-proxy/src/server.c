@@ -183,7 +183,6 @@ int servers_polling(int epoll_fd, const struct hashmap* server_list, struct epol
 {
 	int active_events = 0;
 	int eventid = 0;
-	int epoll_errno = 0;
 	struct server* server_ptr = NULL;
 	static struct iphdr ip_header = { 0, };
 	unsigned char* packet = NULL;
