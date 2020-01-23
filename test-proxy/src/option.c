@@ -6,6 +6,8 @@
 #include "client.h"
 #include "vector.h"
 
+#include "types.h"
+
 /*
  * Get all of types of option from arguments
  * Options:
@@ -23,8 +25,7 @@ int get_options(struct option* dest, int argc, const char** argv)
 	{
 		return OPTION_GET_ARGS_PARSE_ERROR;
 	}
-
-	if (get_option_from_file(dest) == 0)
+	if (get_option_from_file(dest) == FALSE)
 	{
 		return OPTION_GET_FILE_PARSE_ERROR;
 	}
@@ -108,7 +109,7 @@ int get_option_from_file(struct option* dest)
 	char* current_pos;
 	char config_key[MAX_CONFIG_KEY_LENGTH];
 	int key_len;
-	int ret = 1;
+	int ret = TRUE;
 
 	if (!file)
 	{
@@ -125,7 +126,6 @@ int get_option_from_file(struct option* dest)
 		current_pos = data;
 
 		skip_whitespace(&current_pos);
-
 		while (*current_pos > ' ')
 		{
 			config_key[key_len++] = *current_pos;
@@ -133,7 +133,6 @@ int get_option_from_file(struct option* dest)
 		}
 
 		config_key[key_len] = '\0';
-
 		if (keycmp(config_key, "server_address") == 0)
 		{
 			skip_whitespace(&current_pos);
@@ -143,7 +142,7 @@ int get_option_from_file(struct option* dest)
 		{
 			printf("Config key '%s' is not valid.", config_key);
 			
-			ret = 0;
+			ret = FALSE;
 			break;
 		}
 	}

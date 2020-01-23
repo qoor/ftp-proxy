@@ -12,6 +12,7 @@
 #include "server.h"
 #include "proxy.h"
 #include "packet.h"
+#include "types.h"
 
 static void server_free(struct server* target_server);
 
@@ -64,7 +65,7 @@ int add_server(struct hashmap* dest, const char* connection_string, int epoll_fd
 	char* colon_pos = NULL;
 	char server_ip[32];
 	size_t address_length = 0;
-	int header_include = 1;
+	int header_include = TRUE;
 	int flags = 0;
 	struct epoll_event epoll_event;
 
