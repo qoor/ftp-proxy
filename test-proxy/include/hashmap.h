@@ -1,7 +1,10 @@
 #ifndef __HASHMAP_H__
 #define __HASHMAP_H__
 
+#include <stddef.h>
+
 #define DEFAULT_HASHMAP_SIZE 256
+
 
 struct hashmap_element
 {

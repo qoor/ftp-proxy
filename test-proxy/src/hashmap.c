@@ -1,6 +1,9 @@
-#include "StdInc.h"
-
 #include "hashmap.h"
+
+#include <malloc.h>
+#include <errno.h>
+
+#include "proxy.h"
 
 static int get_hash_key(const struct hashmap* map, void* key)
 {
