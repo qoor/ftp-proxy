@@ -31,12 +31,6 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
-	if (add_servers_from_vector(server_list, option.connection_strings) != SERVER_ADD_SUCCESS)
-	{
-		main_free(server_list);
-		return 0;
-	}
-
 	if ((server_list = hashmap_init(option.connection_strings->size, hashmap_hash_int, hashmap_equals_int)) == NULL)
 	{
 		main_free(server_list);
@@ -44,6 +38,12 @@ int main(int argc, const char** argv)
 	}
 
 	if ((server_epoll_fd = epoll_create(MAX_EVENTS)) == -1)
+	{
+		main_free(server_list);
+		return 0;
+	}
+
+	if (add_servers_from_vector(server_list, option.connection_strings, server_epoll_fd) != SERVER_ADD_SUCCESS)
 	{
 		main_free(server_list);
 		return 0;

@@ -9,6 +9,13 @@ enum packet_addr_change_type
 	PACKET_ADDR_CHANGE_TYPE_DEST
 };
 
+enum packet_error_type
+{
+	PACKET_SUCCESS,
+	PACKET_INVALID,
+	PACKET_ALLOC_FAILED
+};
+
 /* TCP Pseudo header */
 struct pseudohdr
 {

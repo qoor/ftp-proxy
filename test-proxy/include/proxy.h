@@ -11,6 +11,9 @@ This header is the header that defines the RETURN code.
 #define EVENT_TIMEOUT 100 /* EPOLL event timeout as milliseconds */
 #define MIN_CAPACITY_CALC(capacity) ((capacity) * 4 / 3)
 
+#define FTP_COMMAND_PORT 21
+#define FTP_DATA_PORT 20
+
 /* LOG RETURN CODE DEFINE*/
 enum log_init_error_type
 {
