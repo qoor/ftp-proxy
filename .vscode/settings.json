@@ -1,4 +1,5 @@
 {
+    "editor.codeLens": true,
     "files.associations": {
         "time.h": "c",
         "stdinc.h": "c",
@@ -7,6 +8,7 @@
         "byteorder.h": "c",
         "proxy.h": "c",
         "log.h": "c",
+        "client.h": "c",
         "cstdio": "c"
     },
     "C_Cpp.default.cStandard": "c89",
