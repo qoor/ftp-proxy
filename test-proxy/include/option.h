@@ -20,5 +20,6 @@ int create_option_file(void);
 void add_server_to_option(struct option* dest, const char* connection_string);
 
 int keycmp(const char* target, const char* original_key);
+int print_help(const char* argv);
 
 #endif

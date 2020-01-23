@@ -1,7 +1,10 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "proxy.h"
 #include "option.h"
+#include "client.h"
+#include "vector.h"
 
 /*
  * Get all of types of option from arguments
@@ -167,5 +170,20 @@ void skip_whitespace(char** data)
 int keycmp(const char* target, const char* original_key)
 {
 	return strncmp(target, original_key, strlen(original_key));
+}
+
+/* Print help */
+/*
+Do not use argv[0] as a factor.
+Argv[0] should not be used as a printf factor because argv[0] is already passed as a factor when calling the print_help function.
+It cause Segmentation fault
+*/
+int print_help(const char* argv)
+{
+	printf("---------- Help ----------\n");
+	printf("Usage: %s \n", argv);
+	printf("debugging: %s -c debugging [Developer Only] \n", argv);
+	printf("Help: %s -h \n", argv);
+	return 0;
 }
 

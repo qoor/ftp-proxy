@@ -1,7 +1,8 @@
 #include <stdio.h>
+#include <malloc.h>
+#include <string.h>
 
 #include <netinet/ip.h>
-#include <linux/tcp.h>
 
 #include "packet.h"
 

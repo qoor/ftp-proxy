@@ -1,14 +1,15 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <malloc.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <netinet/ip.h>
 #include <netinet/in.h>
-#include <sys/epoll.h>
 
 #include "server.h"
-#include "vector.h"
-#include "hashmap.h"
 #include "proxy.h"
 #include "packet.h"
 

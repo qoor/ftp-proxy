@@ -64,21 +64,6 @@ int main(int argc, const char** argv)
 	return 0;
 }
 
-/* Print help */
-/*
-Do not use argv[0] as a factor.
-Argv[0] should not be used as a printf factor because argv[0] is already passed as a factor when calling the print_help function.
-It cause Segmentation fault
-*/
-int print_help(const char* argv)
-{
-	printf("---------- Help ----------\n");
-	printf("Usage: %s \n", argv);
-	printf("debugging: %s -c debugging [Developer Only] \n", argv);
-	printf("Help: %s -h \n", argv);
-	return 0;
-}
-
 void main_free(struct hashmap* server_list)
 {
 	reset_server_list(server_list);
