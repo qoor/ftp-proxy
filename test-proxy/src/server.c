@@ -48,7 +48,8 @@ int add_servers_from_vector(struct hashmap* dest, const struct vector* connectio
 			continue;
 		}
 
-		if ((ret = add_server(dest, current_string, epoll_fd)))
+		ret = add_server(dest, current_string, epoll_fd);
+		if (ret != SERVER_ADD_SUCCESS)
 		{
 			break;
 		}
@@ -61,7 +62,7 @@ int add_server(struct hashmap* dest, const char* connection_string, int epoll_fd
 {
 	struct server* server_object = NULL;
 	char* colon_pos = NULL;
-	char* server_ip = NULL;
+	char server_ip[32];
 	size_t address_length = 0;
 	int header_include = 1;
 	int flags = 0;
@@ -70,16 +71,24 @@ int add_server(struct hashmap* dest, const char* connection_string, int epoll_fd
 	memset(&epoll_event, 0x00, sizeof(struct epoll_event));
 	epoll_event.events = EPOLLIN;
 
-	if (dest == NULL || (server_object = (struct server*)malloc(sizeof(struct server))) == NULL)
+	if (dest == NULL)
 	{
-		free(server_object);
+		return SERVER_ADD_ALLOC_FAILED;
+	}
+	if (connection_string == NULL)
+	{
+		return SERVER_ADD_INCORRECT_CONNECTION_STRING;
+	}
 
+	server_object = (struct server*)malloc(sizeof(struct server));
+	if (server_object == NULL)
+	{
 		return SERVER_ADD_ALLOC_FAILED;
 	}
 
 	server_object->socket_fd = -1;
-	
-	if ((server_object->socket_address = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in))) == NULL)
+	server_object->socket_address = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
+	if (server_object->socket_address == NULL)
 	{
 		server_free(server_object);
 
@@ -88,7 +97,8 @@ int add_server(struct hashmap* dest, const char* connection_string, int epoll_fd
 
 	memset(server_object->socket_address, 0x00, sizeof(struct sockaddr_in));
 
-	if (connection_string == NULL || (colon_pos = strchr(connection_string, ':')) == NULL)
+	colon_pos = strchr(connection_string, ':');
+	if (colon_pos == NULL)
 	{
 		server_free(server_object);
 
@@ -96,22 +106,20 @@ int add_server(struct hashmap* dest, const char* connection_string, int epoll_fd
 	}
 
 	address_length = colon_pos - connection_string;
-	if ((server_ip = (char*)malloc((address_length + 1) * sizeof(char))) == NULL)
-	{
-		server_free(server_object);
-
-		return SERVER_ADD_INCORRECT_CONNECTION_STRING;
-	}
-
 	strncpy(server_ip, connection_string, address_length + 1);
 	server_ip[address_length] = '\0';
 	server_object->socket_address->sin_addr.s_addr = htonl(atoi(server_ip));
 	server_object->socket_address->sin_port = htons(atoi(colon_pos + 1));
-	free(server_ip);
 
-	if ((server_object->socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) == -1 ||
-		setsockopt(server_object->socket_fd, IPPROTO_IP, IP_HDRINCL, &header_include, sizeof(header_include)) == -1 ||
-		epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_object->socket_fd, &epoll_event));
+	server_object->socket_fd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+	if (server_object->socket_fd == -1)
+	{
+		server_free(server_object);
+
+		return SERVER_ADD_SOCKET_CREATE_FAILED;
+	}
+	if (setsockopt(server_object->socket_fd, IPPROTO_IP, IP_HDRINCL, &header_include, sizeof(header_include)) == -1 ||
+		epoll_ctl(epoll_fd, EPOLL_CTL_ADD, server_object->socket_fd, &epoll_event))
 	{
 		server_free(server_object);
 
@@ -119,7 +127,7 @@ int add_server(struct hashmap* dest, const char* connection_string, int epoll_fd
 	}
 
 	flags = fcntl(server_object->socket_fd, F_GETFL, 0);
-	fcntl(server_object->socket_fd, F_SETFL, flags & O_NONBLOCK);
+	fcntl(server_object->socket_fd, F_SETFL, flags | O_NONBLOCK);
 
 	hashmap_insert(dest, &server_object->socket_fd, server_object);
 	if (errno != HASHMAP_SUCCESS)
@@ -180,25 +188,26 @@ int servers_polling(int epoll_fd, const struct hashmap* server_list, struct epol
 	static struct iphdr ip_header = { 0, };
 	unsigned char* packet = NULL;
 
-	active_events = epoll_wait(epoll_fd, *events, MAX_EVENTS, EVENT_TIMEOUT);
+	errno = 0;
 
-	if (active_events == -1 && (epoll_errno = errno) != EINTR)
+	active_events = epoll_wait(epoll_fd, *events, MAX_EVENTS, EVENT_TIMEOUT);
+	if (active_events == -1 && errno != EINTR)
 	{
 		return SERVERS_POLLING_WAIT_ERROR;
 	}
 
 	for (eventid = 0; eventid < active_events; ++eventid)
 	{
-		server_ptr = NULL;
+		server_ptr = (struct server*)hashmap_get(server_list, &events[eventid]->data.fd);
 		memset(&ip_header, 0x00, sizeof(struct iphdr));
 
-		if ((server_ptr = (struct server*)hashmap_get(server_list, &events[eventid]->data.fd)) == NULL)
+		if (server_ptr == NULL)
 		{
 			/* Invalid socket descriptor */
 			continue;
 		}
 
-		if (get_packet_from_server(server_ptr, &ip_header, packet) != PACKET_SUCCESS)
+		if (get_packet_from_server(server_ptr, &ip_header, &packet) != PACKET_SUCCESS)
 		{
 			/* Not valid packet */
 			continue;
@@ -212,7 +221,7 @@ int servers_polling(int epoll_fd, const struct hashmap* server_list, struct epol
 	return SERVERS_POLLING_SUCCESS;
 }
 
-int get_packet_from_server(const struct server* server, struct iphdr* ip_header, unsigned char* packet)
+int get_packet_from_server(const struct server* server, struct iphdr* ip_header, unsigned char** packet)
 {
 	struct tcphdr* tcp_header = NULL;
 
@@ -222,29 +231,36 @@ int get_packet_from_server(const struct server* server, struct iphdr* ip_header,
 		return PACKET_INVALID;
 	}
 
-	if ((packet = (unsigned char*)malloc(ip_header->tot_len)) == NULL)
+	*packet = (unsigned char*)malloc(ip_header->tot_len);
+	if (*packet == NULL)
 	{
 		/* Packet memory allocation failed */
 		return PACKET_ALLOC_FAILED;
 	}
 
-	memcpy((char*)packet, (char*)&ip_header, sizeof(char));
-	if (recv(server->socket_fd, packet + 20, 20, 0) < 20)
+	memcpy((char*)*packet, (char*)&ip_header, sizeof(char));
+	if (recv(server->socket_fd, *packet + 20, 20, 0) < 20)
 	{
 		/* Failed to try receiving TCP Header */
+		free(*packet);
+
 		return PACKET_INVALID;
 	}
 
-	tcp_header = (struct tcphdr*)packet + 20;
+	tcp_header = (struct tcphdr*)*packet + 20;
 	if (tcp_header->source != FTP_COMMAND_PORT && tcp_header->source != FTP_DATA_PORT)
 	{
 		/* Is not a FTP packet */
+		free(*packet);
+
 		return PACKET_INVALID;
 	}
 
-	if (recv(server->socket_fd, packet + 40, ip_header->tot_len - 40, 0) < ip_header->tot_len - 40)
+	if (recv(server->socket_fd, *packet + 40, ip_header->tot_len - 40, 0) < ip_header->tot_len - 40)
 	{
-		/* Invalid packet */
+		/* Failed to trying to get packet data */
+		free(*packet);
+
 		return PACKET_INVALID;
 	}
 

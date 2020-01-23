@@ -22,6 +22,6 @@ void server_packet_received(const struct server* server, unsigned char* packet);
 void send_packet_to_server(struct server* dst_server, unsigned char* packet);
 int servers_polling(int epoll_fd, const struct hashmap* server_list, struct epoll_event** events);
 struct server* get_server_from_fd(const struct hashmap* server_list, int fd);
-int get_packet_from_server(const struct server* server, struct iphdr* ip_header, unsigned char* packet);
+int get_packet_from_server(const struct server* server, struct iphdr* ip_header, unsigned char** packet);
 
 #endif
