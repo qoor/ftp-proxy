@@ -1,6 +1,8 @@
 #ifndef __VECTOR_H__
 #define __VECTOR_H__
 
+#include <sys/types.h>
+
 #define DEFAULT_VECTOR_CAPACITY 20
 
 struct vector
@@ -20,3 +22,4 @@ int vector_set(struct vector* vector, int index, void* object);
 int vector_clear(struct vector* vector);
 
 #endif
+

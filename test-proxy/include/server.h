@@ -1,7 +1,8 @@
-#ifndef __SERVER_H__
-#define __SERVER_H__
+#ifndef PROXY_INCLUDE_SERVER_H__
+#define PROXY_INCLUDE_SERVER_H__
 
 #include <sys/epoll.h>
+#include <netinet/ip.h>
 
 #include "vector.h"
 #include "hashmap.h"
@@ -25,3 +26,4 @@ struct server* get_server_from_fd(const struct hashmap* server_list, int fd);
 int get_packet_from_server(const struct server* server, struct iphdr* ip_header, unsigned char** packet);
 
 #endif
+

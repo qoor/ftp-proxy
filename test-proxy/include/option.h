@@ -1,10 +1,10 @@
-#ifndef __OPTION_H__
-#define __OPTION_H__
+#ifndef PROXY_INCLUDE_OPTION_H_
+#define PROXY_INCLUDE_OPTION_H_
 
 #define OPTION_FILE_NAME "proxy"
 #define OPTION_FILE_EXT "cfg"
 #define OPTION_FILE_PATH ("" OPTION_FILE_NAME "." OPTION_FILE_EXT)
-#define MAX_CONFIG_KEY_LENGTH 32
+#define MAX_CONFIG_KEY_LENGTH (32)
 
 struct option
 {
@@ -23,3 +23,4 @@ int keycmp(const char* target, const char* original_key);
 int print_help(const char* argv);
 
 #endif
+

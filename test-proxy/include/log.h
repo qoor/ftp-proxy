@@ -1,5 +1,5 @@
-#ifndef __LOG_H__
-#define __LOG_H__
+#ifndef PROXY_INCLUDE_LOG_H_
+#define PROXY_INCLUDE_LOG_H_
 
 #define DEFAULT_LOG_FILE_NAME	"proxy"
 #define DEFAULT_LOG_FILE_EXT	"log"
@@ -14,3 +14,4 @@ int log_write(const char* message, ...);
 void log_free(void);
 
 #endif
+

@@ -1,7 +1,10 @@
-#ifndef __PACKET_H__
-#define __PACKET_H__
+#ifndef PROXY_INCLUDE_PACKET_H_
+#define PROXY_INCLUDE_PACKET_H_
 
+#include <netinet/ip.h>
+#include <linux/in.h>
 #include <linux/tcp.h>
+#include <sys/types.h>
 
 enum packet_addr_change_type
 {
@@ -38,3 +41,4 @@ void calculate_tcp_header_cksum(struct tcphdr* dest_tcp_header, struct tcpcksumh
 unsigned short in_cksum(unsigned short* addr, int len);
 
 #endif
+

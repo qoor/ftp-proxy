@@ -1,5 +1,5 @@
-#ifndef __HASHMAP_H__
-#define __HASHMAP_H__
+#ifndef PROXY_INCLUDE_HASHMAP_H_
+#define PROXY_INCLUDE_HASHMAP_H_
 
 #include <stddef.h>
 
@@ -35,3 +35,4 @@ int hashmap_hash_int(void* key);
 int hashmap_equals_int(void* key1, void* key2);
 
 #endif
+

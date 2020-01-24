@@ -1,0 +1,5 @@
+@cc
+
+%c -std=c90
+%c -Wall
+%c -Iinclude

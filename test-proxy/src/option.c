@@ -1,8 +1,9 @@
+#include "option.h"
+
 #include <stdio.h>
 #include <string.h>
 
 #include "proxy.h"
-#include "option.h"
 #include "client.h"
 #include "vector.h"
 

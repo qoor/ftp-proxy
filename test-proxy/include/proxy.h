@@ -1,5 +1,5 @@
-#ifndef __PROXY_H__
-#define __PROXY_H__
+#ifndef PROXY_INCLUDE_PROXY_H__
+#define PROXY_INCLUDE_PROXY_H__
 
 /* 
 This header is the header that defines the RETURN code.
@@ -7,12 +7,12 @@ This header is the header that defines the RETURN code.
 [Using error code macro enum, error code header integrated sample code : https://github.com/curl/curl]
 */
 
-#define MAX_EVENTS 254 /* Amount of file descriptor of monitoring */
-#define EVENT_TIMEOUT 100 /* EPOLL event timeout as milliseconds */
+#define MAX_EVENTS (254) /* Amount of file descriptor of monitoring */
+#define EVENT_TIMEOUT (0) /* EPOLL event timeout as milliseconds */
 #define MIN_CAPACITY_CALC(capacity) ((capacity) * 4 / 3)
 
-#define FTP_COMMAND_PORT 21
-#define FTP_DATA_PORT 20
+#define FTP_COMMAND_PORT (21)
+#define FTP_DATA_PORT (20)
 
 /* LOG RETURN CODE DEFINE*/
 enum log_init_error_type
@@ -93,3 +93,4 @@ enum hashmap_error_type
 };
 
 #endif
+

@@ -1,3 +1,5 @@
+#include "server.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -9,7 +11,6 @@
 #include <netinet/ip.h>
 #include <netinet/in.h>
 
-#include "server.h"
 #include "proxy.h"
 #include "packet.h"
 #include "types.h"
