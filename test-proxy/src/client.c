@@ -1,6 +1,5 @@
 #include "client.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -9,8 +8,6 @@
 #include <arpa/inet.h>
 #include <linux/tcp.h>
 #include <netinet/in.h>
-#include <netinet/ip.h>
-#include <sys/epoll.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h> /* uintx_t */
@@ -28,8 +25,8 @@ void polling_client()
 	/*declaration of variables associated with listen_epoll*/
 	struct epoll_event event = { 0, };
 	struct epoll_event events[MAX_CLIENT_EVENTS] = { {0,}, };
-	int ready = 0;
-	int temp = 0;
+	int event_ready = 0;
+	int i = 0;
 	/* declaration of packet-related variables */
 	int ip_header_length = 0;
 	struct iphdr* ip_header = NULL;
@@ -77,8 +74,8 @@ void polling_client()
 		ip_header_length = ip_header->ihl * 4;
 		tcp_header = (struct tcphdr*)((char*)ip_header + ip_header_length);
 
-		ready = epoll_wait(epoll_file_descriptor, events, MAX_CLIENT_EVENTS, -1); /* Monitoring */
-		if (ready == -1)
+		event_ready = epoll_wait(epoll_file_descriptor, events, MAX_CLIENT_EVENTS, -1); /* Monitoring */
+		if (event_ready == -1)
 		{
 			if (errno == EINTR)
 			{
@@ -90,14 +87,17 @@ void polling_client()
 			}
 
 		}
+
 		if (ntohs(tcp_header->dest) == BIND_CLIENT_PORT) /* Destination port finds something like BIND_CLIENT_PORT among incoming packets */
 		{
-			for (temp = 0; temp < ready; temp++)
+			for (i = 0; i < event_ready; i++)
 			{
-				if (events[temp].data.fd == raw_socket_file_descriptor) /* polling a client */
+				if (events[i].data.fd == raw_socket_file_descriptor) /* polling a client */
 				{
+
 					printf("epoll_file_descriptor : %d \n", epoll_file_descriptor);
 					printf("raw_socket_file_descriptor : %d \n", raw_socket_file_descriptor);
+					printf("events[i].data.fd : %d \n",events[i].data.fd);
 
 					printf("========== RECV TCP(FTP) SEGMENT ========== \n");
 					printf("\n");

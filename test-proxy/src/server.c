@@ -223,7 +223,7 @@ int servers_polling(int epoll_fd, const struct hashmap* server_list, struct epol
 }
 
 int get_packet_from_server(const struct server* server, struct iphdr* ip_header, unsigned char** packet)
-{
+{	
 	struct tcphdr* tcp_header = NULL;
 
 	if (recv(server->socket_fd, ip_header, 20, 0) < 20 || ip_header->tot_len < 40)
