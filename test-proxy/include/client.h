@@ -9,9 +9,11 @@
 #include <netinet/ip.h>
 
 /* Client info structure */
-struct client
+struct client_data
 {
-    
+    int client_fd;
+    struct sockaddr_in* socket_address;
 };
+
 void polling_client(void); /* 임시 함수임 수정 예정 */
 #endif
