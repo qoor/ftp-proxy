@@ -1,115 +1,132 @@
 #include "client.h"
 
-#include <string.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <malloc.h>
+#include <string.h>
+#include <unistd.h>
 
-#include <arpa/inet.h>
-#include <linux/tcp.h>
+#include <netinet/ip.h>
 #include <netinet/in.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <sys/types.h> /* uintx_t */
+
+#include "proxy.h"
+#include "packet.h"
+#include "types.h"
+
+/*
+static void client_free(struct client* target_client);
+
+static int remove_client_loop(void* key, void* value, void* context)
+{
+	client_free((struct client*)value);
+	return 1;
+}
+
+ Add client to destination from function get_client() 
+int add_clients()
+{
+	int i = 0;
+	int client_count = 0;
+	int ret = CLIENT_ADD_SUCCESS;
+
+	if ()
+}
+*/
 
 void polling_client()
 {
-	/*Declare create_epoll related variables*/
 	int epoll_fd = 0;
-	/*Create_raw_socket related variable declaration*/
 	int socket_fd = 0;
-	int client_addr_len = 0;
-	int sock_opt = 1;
-	int flags = 0;
-	struct sockaddr_in client_addr = { 0, };
-	char rbuff[BUFSIZ] = { 0, };
-	/*declaration of variables associated with listen_epoll*/
-	struct epoll_event event = { 0, };
-	struct epoll_event events[MAX_CLIENT_EVENTS] = { {0,}, };
-	struct client_data* client_data = NULL;
+	int socket_opt = 1;
+	int bind_client_addr_len = 0;
+	int ip_header_length = 0;
 	int active_events = 0;
 	int i = 0; /* eventid */
-	int client_file_descriptor = 0;
-	/* declaration of packet-related variables */
-	int ip_header_length = 0;
+	char rbuff[BUFSIZ] = { 0, }; /* recv packet */
 	struct iphdr* ip_header = NULL;
 	struct tcphdr* tcp_header = NULL;
+	struct epoll_event event = { 0, };
+	struct epoll_event events[MAX_CLIENT_EVENTS] = { {0,}, };
+	struct sockaddr_in bind_client_addr = { 0, };
+	struct client* client_ptr = malloc(sizeof(struct client));
 
-
-	epoll_fd = epoll_create(MAX_CLIENT_EVENTS); /* Creating an EPOLL object */
+	/* Creating an EPOLL object */
+	epoll_fd = epoll_create(MAX_CLIENT_EVENTS); 
 	if (epoll_fd == -1)
 	{
-		fprintf(stderr, "EPOLL CREATE ERROR");
+		return EPOLL_CREATE_FAILED;
 	}
 
-	socket_fd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP); /* Create RAW Sockets */
+	/* Create RAW Socket */
+	socket_fd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
 	if (socket_fd < 0)
 	{
-		fprintf(stderr, "RAW SOCKET CREATE ERROR");
+		return SOCKET_CREATE_FAILED;
 	}
 
-	/*
+/*
 	Set the source IP address to be used for datagrams that will be sent to the raw socket when the RAW socket is created and bind is called.
 	(Only if IP_HERINCL socket option is not set) If bind is not called, the kernel sets source IP address as the first IP address of the output interface.
-	*/
+*/
 
-	if (setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &sock_opt, sizeof(sock_opt)) < 0) /* Set IP_HDRINCL Options */
+	/* Set IP_HDRINCL Option */
+	if (setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &socket_opt, sizeof(socket_opt)) < 0)
 	{
-		fprintf(stderr, "SET SOCKET OPT ERROR \n");
+		return SOCKET_OPT_FAILED;
 	}
 
-	event.events = EPOLLIN; /* 이벤트가 들어오면 알림 */
-	event.data.fd = socket_fd; /* 듣기 소켓을 추가한다 */
+	/* recv packet */
+	/* Uses revvfrom to store the terminal address from which the received data was sent to bind_client_addr */
+	if(recvfrom(socket_fd, rbuff, BUFSIZ - 1, 0x0, (struct sockaddr*)&bind_client_addr, (socklen_t*)&bind_client_addr_len) < 0)
+	{
+		return SOCKET_RECV_FAILED;
+	}
+
+	event.events = EPOLLIN; /* Notify me when events come in */
+	event.data.fd = socket_fd; /* Set the listening socket. */
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, socket_fd, &event) == -1)
 	{
-		fprintf(stderr, "EPOLL CTL ERROR \n");
+		return EPOLL_CTL_FAILED;
 	}
-/* 넣으면 에러발생해서 일단 빼둠
-	flags = fcntl(socket_fd, F_GETFL, 0);
-	fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK);
-*/
-	printf("CLIENT POLLING... \n");
-	while (1)
+
+	printf("Start Monitoring ... \n");
+	while (TRUE)
 	{
-		if (recvfrom(socket_fd, rbuff, BUFSIZ - 1, 0x0, (struct sockaddr *)&client_addr, (socklen_t *)&client_addr_len) < 0) /* recv packet */
-		/* 수신받은 데이터를 송신한 단말 주소를 client_addr 에 저장하기 위해 recvfrom 사용함 */
-		{
-			fprintf(stderr, "RECV ERROR \n");
-			continue;
-		}
+		/* Obtain headers for received packets */
 		ip_header = (struct iphdr*) rbuff;
 		ip_header_length = ip_header->ihl * 4;
 		tcp_header = (struct tcphdr*)((char*)ip_header + ip_header_length);
 
-		/* 
-		사건 발생까지 무한 대기
-		epoll_fd의 사건 발생 시 events에 fd를 채운다
-		active_events은 listen에 성공한 fd의 수
-		*/
-		active_events = epoll_wait(epoll_fd, events, MAX_CLIENT_EVENTS, -1); /* Monitoring */
+		/* Epoll Monitoring */
+		active_events = epoll_wait(epoll_fd, events, MAX_CLIENT_EVENTS, -1);
 		if (active_events == -1)
 		{
+			/* continue if interrupt */
 			if (errno == EINTR)
 			{
-				continue; /* continue if interrupt */
+				continue;
 			}
 			else
 			{
-				fprintf(stderr, "EPOLL WAIT ERROR \n");
+				return EPOLL_WAIT_FAILED;
 			}
-
 		}
 
-		if (ntohs(tcp_header->dest) == BIND_CLIENT_PORT) /* Destination port finds something like BIND_CLIENT_PORT among incoming packets */
+		/* Destination port finds something like BIND_CLIENT_PORT among incoming packets */
+		if (ntohs(tcp_header->dest) == BIND_CLIENT_PORT)
 		{
-			for (i = 0; i < active_events; i++)
+			for (i = 0; i < active_events; ++i)
 			{
-				if (events[i].data.fd == socket_fd) /* polling a client */
+				/* polling a client */
+				if (events[i].data.fd == socket_fd)
 				{
-					printf("epoll_fd : %d \n", epoll_fd);
-					printf("socket_fd : %d \n", socket_fd);
-					printf("events[i].data.fd : %d \n",events[i].data.fd);
+					strcpy(client_ptr->client_address, ip_header->saddr);
+					strcpy(client_ptr->socket_fd, events[i].data.fd);
+
+					printf("client_ptr->client_address : %15s \n", inet_ntoa(*(struct in_addr*)&ip_header->saddr));
+					printf("client_ptr->socket_fd : %d \n", events[i].data.fd);
 
 					printf("========== RECV TCP(FTP) SEGMENT ========== \n");
 					printf("\n");
@@ -135,6 +152,6 @@ void polling_client()
 			}
 		}
 	}
-	close(socket_fd);
-	close(epoll_fd);
+
+
 }
