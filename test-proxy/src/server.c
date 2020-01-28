@@ -165,6 +165,10 @@ void reset_server_list(struct hashmap* dest)
 	hashmap_clear(dest);
 }
 
+/* 
+ * An handler of Packet received from server
+ * This function role full valid packet received event alert to client
+*/
 void server_packet_received(const struct server* server, unsigned char* packet)
 {
 	/* Require packet receive handling client.c */
@@ -222,6 +226,10 @@ int servers_polling(int epoll_fd, const struct hashmap* server_list, struct epol
 	return SERVERS_POLLING_SUCCESS;
 }
 
+/*
+ * Filtering packet from all of server packets
+ * This function role filtering FTP (data/command) packet from all of server source packets
+*/ 
 int get_packet_from_server(const struct server* server, struct iphdr* ip_header, unsigned char** packet)
 {	
 	struct tcphdr* tcp_header = NULL;
@@ -229,6 +237,10 @@ int get_packet_from_server(const struct server* server, struct iphdr* ip_header,
 	if (recv(server->socket_fd, ip_header, 20, 0) < 20 || ip_header->tot_len < 40)
 	{
 		/* Invalid packet */
+		return PACKET_INVALID;
+	}
+	if (ip_header->protocol != IPPROTO_TCP)
+	{
 		return PACKET_INVALID;
 	}
 
@@ -267,3 +279,4 @@ int get_packet_from_server(const struct server* server, struct iphdr* ip_header,
 
 	return PACKET_SUCCESS;
 }
+
