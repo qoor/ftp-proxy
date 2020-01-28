@@ -7,8 +7,6 @@
 
 #include <sys/types.h>
 
-#include "proxy.h"
-
 static void expand_if_necessary(struct vector* vector)
 {
 	size_t new_capacity = 0;

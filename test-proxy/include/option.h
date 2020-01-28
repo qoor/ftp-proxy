@@ -11,6 +11,24 @@ struct option
 	struct vector* connection_strings;
 };
 
+/* OPTION RETURN CODE DEFINE */
+enum log_option_get_error_type
+{
+	OPTION_GET_SUCCESS,
+	OPTION_GET_FILE_PARSE_ERROR,
+	OPTION_GET_ARGS_PARSE_ERROR
+};
+/* */
+
+/* ARGUMENT RETURN CODE DEFINE */
+enum get_argument_error_type
+{
+	ARGUMENT_SUCCESS,
+	ARGUMENT_FAIL,
+	ARGUMENT_NOT_FOUND
+};
+/* */
+
 int get_options(struct option* dest, int argc, const char** argv);
 int get_option_from_argument(struct option* dest, int argc, const char** argv);
 int get_option_from_file(struct option* dest);

@@ -17,4 +17,5 @@ enum client_error_type
 };
 /* */
 
+int polling_client(void);
 #endif

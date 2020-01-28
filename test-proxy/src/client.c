@@ -9,8 +9,8 @@
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/epoll.h>
+#include <arpa/inet.h>
 
-#include "proxy.h"
 #include "types.h"
 
 int polling_client()
@@ -99,15 +99,20 @@ int polling_client()
 				}
 				event.data.fd = client_fd;
 				fprintf(stderr, "A Client [%s:%d] is Connected : fd[%d] .... \n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port),client_fd);
-
-				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) /* 추가된 파일 디스크립터를 감지 목록에 추가 */
+				
+				/*
+				if (add_session_to_list(,client_fd,SOCKET_TYPE_CLIENT,PORT_TYPE_COMMAND) == SESSION_SUCCESS)  session 리스트에 클라이언트 파일 디스크립터를 등록함 
 				{
-					return EPOLL_CTL_FAILED;
-				}
-				else
-				{
+					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1)  추가된 파일 디스크립터를 감지 목록에 추가 
+					{
+						return EPOLL_CTL_FAILED;
+					}
+					else
+					{
 
+					}
 				}
+				*/
 			}
 		}
 	}

@@ -11,7 +11,6 @@
 #include <netinet/ip.h>
 #include <netinet/in.h>
 
-#include "proxy.h"
 #include "packet.h"
 #include "types.h"
 

@@ -4,6 +4,16 @@
 #include <stddef.h>
 
 #define DEFAULT_HASHMAP_SIZE 256
+#define MIN_CAPACITY_CALC(capacity) ((capacity) * 4 / 3)
+
+/* HASHMAP RETURN CODE DEFINE */
+enum hashmap_error_type
+{
+	HASHMAP_SUCCESS,
+	HASHMAP_INVALID,
+	HASHMAP_INVALID_KEY,
+	HASHMAP_ALLOC_FAILED
+};
 
 
 struct hashmap_element

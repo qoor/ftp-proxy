@@ -3,8 +3,6 @@
 #include <errno.h>
 #include <malloc.h>
 
-#include "proxy.h"
-
 static int get_hash_key(const struct hashmap* map, void* key)
 {
 	int hash = map->hash_function(key);
