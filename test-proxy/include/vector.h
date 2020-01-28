@@ -4,6 +4,17 @@
 #include <sys/types.h>
 
 #define DEFAULT_VECTOR_CAPACITY 20
+#define MIN_CAPACITY_CALC(capacity) ((capacity) * 4 / 3)
+
+/* VECTOR RETURN CODE DEFINE */
+enum vector_error_type
+{
+	VECTOR_SUCCESS,
+	VECTOR_INVALID,
+	VECTOR_ALLOC_FAILED,
+	VECTOR_OUT_OF_BOUNDS
+};
+/* */
 
 struct vector
 {

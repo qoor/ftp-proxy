@@ -4,16 +4,18 @@
 #define MAX_CLIENT_EVENTS 254
 #define BIND_CLIENT_PORT 7777
 
-#include <stdio.h>
-#include <sys/epoll.h>
-#include <netinet/ip.h>
-
-/* Client info structure */
-struct client_data
+/* CLIENT RETURN CODE DEFINE */
+enum client_error_type
 {
-    int client_fd;
-    struct sockaddr_in* socket_address;
+	POLLING_SUCCESS,
+	EPOLL_CREATE_FAILED,
+	SOCKET_CREATE_FAILED,
+	SOCKET_BIND_FAILED,
+	SOCKET_LISTEN_FAILED,
+	EPOLL_CTL_FAILED,
+	EPOLL_WAIT_FAILED
 };
+/* */
 
-void polling_client(void); /* 임시 함수임 수정 예정 */
+int polling_client(void);
 #endif

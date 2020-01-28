@@ -9,7 +9,6 @@
 #include <sys/timeb.h>
 #include <pthread.h>
 
-#include "proxy.h"
 
 static FILE* log_file = NULL;
 /* Used to buffer length check to prevent buffer overflow */

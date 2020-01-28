@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "proxy.h"
 #include "client.h"
 #include "vector.h"
 

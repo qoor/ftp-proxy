@@ -16,7 +16,6 @@ set (SOURCE_FILE
 	"include/log.h"
 	"include/packet.h"
 	"include/client.h"
-	"include/proxy.h"
 	"include/vector.h"
 	"include/hashmap.h"
 	"include/session.h"

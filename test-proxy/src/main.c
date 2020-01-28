@@ -9,7 +9,6 @@
 #include "log.h"
 #include "option.h"
 #include "packet.h"
-#include "proxy.h"
 #include "vector.h"
 
 
