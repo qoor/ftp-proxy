@@ -2,103 +2,75 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <malloc.h>
 #include <string.h>
 #include <unistd.h>
+#include <errno.h>
 
-#include <netinet/ip.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/epoll.h>
 
 #include "proxy.h"
-#include "packet.h"
 #include "types.h"
 
-/*
-static void client_free(struct client* target_client);
-
-static int remove_client_loop(void* key, void* value, void* context)
-{
-	client_free((struct client*)value);
-	return 1;
-}
-
- Add client to destination from function get_client() 
-int add_clients()
-{
-	int i = 0;
-	int client_count = 0;
-	int ret = CLIENT_ADD_SUCCESS;
-
-	if ()
-}
-*/
-
-void polling_client()
+int polling_client()
 {
 	int epoll_fd = 0;
 	int socket_fd = 0;
-	int socket_opt = 1;
-	int bind_client_addr_len = 0;
-	int ip_header_length = 0;
+	int client_fd = 0;
+	int client_addr_len = 0;
 	int active_events = 0;
 	int i = 0; /* eventid */
-	char rbuff[BUFSIZ] = { 0, }; /* recv packet */
-	struct iphdr* ip_header = NULL;
-	struct tcphdr* tcp_header = NULL;
+	struct sockaddr_in bind_addr = { 0, };
+	struct sockaddr_in client_addr = { 0, };
 	struct epoll_event event = { 0, };
 	struct epoll_event events[MAX_CLIENT_EVENTS] = { {0,}, };
-	struct sockaddr_in bind_client_addr = { 0, };
-	struct client* client_ptr = malloc(sizeof(struct client));
+
 
 	/* Creating an EPOLL object */
-	epoll_fd = epoll_create(MAX_CLIENT_EVENTS); 
+	epoll_fd = epoll_create(MAX_CLIENT_EVENTS);
 	if (epoll_fd == -1)
 	{
 		return EPOLL_CREATE_FAILED;
 	}
 
-	/* Create RAW Socket */
-	socket_fd = socket(PF_INET, SOCK_RAW, IPPROTO_TCP);
+	/* Create Socket */
+	socket_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (socket_fd < 0)
 	{
 		return SOCKET_CREATE_FAILED;
 	}
 
-/*
-	Set the source IP address to be used for datagrams that will be sent to the raw socket when the RAW socket is created and bind is called.
-	(Only if IP_HERINCL socket option is not set) If bind is not called, the kernel sets source IP address as the first IP address of the output interface.
-*/
+	memset(&bind_addr, 0, sizeof(bind_addr));
+	bind_addr.sin_family = AF_INET;
+	bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	bind_addr.sin_port = htons(BIND_CLIENT_PORT);
 
-	/* Set IP_HDRINCL Option */
-	if (setsockopt(socket_fd, IPPROTO_IP, IP_HDRINCL, &socket_opt, sizeof(socket_opt)) < 0)
+	/* Bind Socket */
+	if (bind(socket_fd, (struct sockaddr*) &bind_addr, sizeof(bind_addr)) == -1)
 	{
-		return SOCKET_OPT_FAILED;
+		return SOCKET_BIND_FAILED;
 	}
 
-	/* recv packet */
-	/* Uses revvfrom to store the terminal address from which the received data was sent to bind_client_addr */
-	if(recvfrom(socket_fd, rbuff, BUFSIZ - 1, 0x0, (struct sockaddr*)&bind_client_addr, (socklen_t*)&bind_client_addr_len) < 0)
+	/* Listen Socket */
+	if (listen(socket_fd, 5) < 0)
 	{
-		return SOCKET_RECV_FAILED;
+		return SOCKET_LISTEN_FAILED;
 	}
 
-	event.events = EPOLLIN; /* Notify me when events come in */
-	event.data.fd = socket_fd; /* Set the listening socket. */
+	/* Notify me when events come in */
+	event.events = EPOLLIN;
+	/* Set the listening socket. */
+	event.data.fd = socket_fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, socket_fd, &event) == -1)
 	{
 		return EPOLL_CTL_FAILED;
 	}
 
+	client_addr_len = sizeof(client_addr);
 	printf("Start Monitoring ... \n");
 	while (TRUE)
 	{
-		/* Obtain headers for received packets */
-		ip_header = (struct iphdr*) rbuff;
-		ip_header_length = ip_header->ihl * 4;
-		tcp_header = (struct tcphdr*)((char*)ip_header + ip_header_length);
-
 		/* Epoll Monitoring */
 		active_events = epoll_wait(epoll_fd, events, MAX_CLIENT_EVENTS, -1);
 		if (active_events == -1)
@@ -114,44 +86,32 @@ void polling_client()
 			}
 		}
 
-		/* Destination port finds something like BIND_CLIENT_PORT among incoming packets */
-		if (ntohs(tcp_header->dest) == BIND_CLIENT_PORT)
+		for (i = 0; i < active_events; ++i)
 		{
-			for (i = 0; i < active_events; ++i)
+			/* Accept a Client */
+			if (events[i].data.fd == socket_fd)
 			{
-				/* polling a client */
-				if (events[i].data.fd == socket_fd)
+				client_fd = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_len);
+				if (client_fd == -1)
 				{
-					strcpy(client_ptr->client_address, ip_header->saddr);
-					strcpy(client_ptr->socket_fd, events[i].data.fd);
+					fprintf(stderr, "ACCEPT ERROR\n");
+					continue;
+				}
+				event.data.fd = client_fd;
+				fprintf(stderr, "A Client [%s:%d] is Connected : fd[%d] .... \n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port),client_fd);
 
-					printf("client_ptr->client_address : %15s \n", inet_ntoa(*(struct in_addr*)&ip_header->saddr));
-					printf("client_ptr->socket_fd : %d \n", events[i].data.fd);
+				if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) /* 추가된 파일 디스크립터를 감지 목록에 추가 */
+				{
+					return EPOLL_CTL_FAILED;
+				}
+				else
+				{
 
-					printf("========== RECV TCP(FTP) SEGMENT ========== \n");
-					printf("\n");
-					printf("========== IP HEADER ========== \n");
-					printf("HEADER LENGTH : %d \n", ip_header_length);
-					printf("TOTAL LENGTH : %d \n", ntohs(ip_header->tot_len));
-					printf("SOURCE ADDRESS : %15s \n", inet_ntoa(*(struct in_addr*)&ip_header->saddr));
-					printf("DESTINATION ADDRESS : %15s \n", inet_ntoa(*(struct in_addr*)&ip_header->daddr));
-					printf("TIME TO LIVE : %d \n", ip_header->ttl);
-					printf("\n");
-					printf("========== TCP HEADER ========== \n");
-					printf("HEADER LENGTH : %d \n", ntohs(ip_header->tot_len) - ip_header_length);
-					printf("SOURCE PORT : %d \n", ntohs(tcp_header->source));
-					printf("DESTINATION PORT : %d \n", ntohs(tcp_header->dest));
-					printf("SEQUENCE NO: %u \n", ntohl(tcp_header->seq));
-					printf("ACK NO: %u \n", ntohl(tcp_header->ack_seq));
-					printf("SYN NO: %d \n", ntohs(tcp_header->syn));
-					printf("FLAGS: %c%c%c%c%c%c \n", (tcp_header->fin ? 'F' : 'X'), (tcp_header->syn ? 'F' : 'X'), (tcp_header->rst ? 'F' : 'X'), (tcp_header->psh ? 'F' : 'X'), (tcp_header->ack ? 'F' : 'X'), (tcp_header->urg ? 'F' : 'X'));
-					printf("CHECKSUM : %X \n", ntohs(tcp_header->check));
-					printf("\n");
-					printf("=========================================== \n");
 				}
 			}
 		}
 	}
-
-
+	close(socket_fd);
+	close(epoll_fd);
+	return POLLING_SUCCESS;
 }

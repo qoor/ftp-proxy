@@ -1,20 +1,20 @@
 #ifndef PROXY_INCLUDE_CLIENT_H_
 #define PROXY_INCLUDE_CLIENT_H_
 
-#include <sys/epoll.h>
-#include <netinet/ip.h>
-
-#include <vector.h>
-#include <hashmap.h>
-
 #define MAX_CLIENT_EVENTS 254
 #define BIND_CLIENT_PORT 7777
 
-/* Client info structure */
-struct client
+/* CLIENT RETURN CODE DEFINE */
+enum client_error_type
 {
-	struct sockaddr_in* client_address;
-	int socket_fd;
+	POLLING_SUCCESS,
+	EPOLL_CREATE_FAILED,
+	SOCKET_CREATE_FAILED,
+	SOCKET_BIND_FAILED,
+	SOCKET_LISTEN_FAILED,
+	EPOLL_CTL_FAILED,
+	EPOLL_WAIT_FAILED
 };
+/* */
 
 #endif
