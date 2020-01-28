@@ -126,6 +126,7 @@ struct session* get_session_from_list(const struct vector* session_list, int soc
 		}
 	}
 
+	errno = SESSION_INVALID_SOCKET;
 	return NULL;
 }
 
