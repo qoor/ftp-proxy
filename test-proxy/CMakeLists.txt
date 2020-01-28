@@ -9,6 +9,7 @@ set (SOURCE_FILE
 	"src/client.c"
 	"src/vector.c"
 	"src/hashmap.c"
+	"src/session.c"
 
 	"include/option.h"
 	"include/server.h"
@@ -18,6 +19,7 @@ set (SOURCE_FILE
 	"include/proxy.h"
 	"include/vector.h"
 	"include/hashmap.h"
+	"include/session.h"
 )
 
 add_executable (test-proxy ${SOURCE_FILE})

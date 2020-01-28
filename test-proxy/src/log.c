@@ -85,26 +85,17 @@ int log_write(const char* message, ...)
 
 	pthread_mutex_lock(&logfile_mutex);
 
-	/* Buffer length check before write buffer to prevent buffer overflow */
-	buffer_length = fprintf(log_message_size_check_file, log_format, local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
-		local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm, message);
-	if (buffer_length >= MAX_LOG_MESSAGE_SIZE)
-	{
-		return LOG_WRITE_INVALID_MESSAGE;
-	}
-	/* */
-
 	/* 
 	 * Write log
 	 * Ex) [2020-01-17 13:46:00.000] Hello World!
 	*/
-	sprintf(log_buffer,  "[%04d-%02d-%02d %02d:%02d:%02d.%03d] %s", local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
-		local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm, message);
+	fprintf(log_file,  log_format, local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
+		local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm);
 	/* */
 
 	/* Also buffer length check with arguments */
-	va_start(args, log_buffer);
-	buffer_length = vfprintf(log_message_size_check_file, log_buffer, args);
+	va_start(args, message);
+	buffer_length = vfprintf(log_message_size_check_file, message, args);
 	va_end(args);
 	if (buffer_length >= MAX_LOG_MESSAGE_SIZE)
 	{
@@ -115,8 +106,8 @@ int log_write(const char* message, ...)
 	/* */
 
 	/* Argument push to buffer */
-	va_start(args, log_buffer);
-	buffer_length = vsprintf(log_buffer, log_buffer, args);
+	va_start(args, message);
+	buffer_length = vfprintf(log_file, message, args);
 	va_end(args);
 	/* */
 
@@ -128,13 +119,8 @@ int log_write(const char* message, ...)
 	}
 	else if (buffer_length >= MAX_LOG_MESSAGE_SIZE)
 	{
-		log_buffer[MAX_LOG_MESSAGE_SIZE - 1] = '\0'; /* Ensure EOS */
-		buffer_length = MAX_LOG_MESSAGE_SIZE;
+		fwrite("\n", sizeof(char), 1, log_file);
 	}
-
-	/* Write buffer result to log file */
-	fwrite(log_buffer, sizeof(char), buffer_length, log_file);
-	/* */
 
 	/* */
 	pthread_mutex_unlock(&logfile_mutex);
@@ -168,3 +154,24 @@ void log_free(void)
 
 	pthread_mutex_unlock(&logfile_mutex);
 }
+
+void proxy_error(const char* tagname, const char* format, ...)
+{
+	va_list args;
+
+	if (format == NULL)
+	{
+		return;
+	}
+
+	if (tagname != NULL)
+	{
+		fprintf(stderr, "[%s] ", tagname);
+	}
+
+	va_start(args, format);
+	vfprintf(stderr, format, args);
+	fprintf(stderr, "\n");
+	va_end(args);
+}
+

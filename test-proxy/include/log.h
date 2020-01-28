@@ -12,6 +12,7 @@
 int log_init(void);
 int log_write(const char* message, ...);
 void log_free(void);
+void proxy_error(const char* tagname, const char* format, ...);
 
 #endif
 
