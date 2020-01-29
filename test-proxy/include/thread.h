@@ -43,6 +43,7 @@ struct thread_pool
 	pthread_mutex_t alive_count_mutex;
 };
 
+struct thread_pool* thread_pool_create(int max_threads);
 int thread_pool_free(struct thread_pool* target_thread_pool);
 
 #endif

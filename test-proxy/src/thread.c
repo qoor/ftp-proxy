@@ -1,5 +1,6 @@
 #include "thread.h"
 
+#include <stdlib.h>
 #include <errno.h>
 #include <malloc.h>
 
