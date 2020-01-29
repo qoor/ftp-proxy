@@ -73,7 +73,7 @@ int clients_polling(struct vector* session_list)
 		return EPOLL_CTL_FAILED;
 	}
 	client_addr_len = sizeof(client_addr);
-	printf("Start Monitoring ... \n");
+	printf("Start Monitoring [Clients] ... \n");
 	while (TRUE)
 	{
 		/* Epoll Monitoring */

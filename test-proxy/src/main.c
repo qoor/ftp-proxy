@@ -13,6 +13,7 @@
 #include "session.h"
 #include "client.h"
 #include "thread.h"
+#include "types.h"
 
 static void main_free(struct hashmap* server_list, struct vector* session_list, struct thread_pool* thpool)
 {
@@ -79,27 +80,39 @@ int main(int argc, const char** argv)
 		main_free(server_list, session_list, thpool);
 		return 0;
 	}
-	
-/* Main logic write in here */
-	void thread_clients_polling()
-	{
-		clients_polling(session_list);
-	}
-	
-	if (thread_pool_add_work(thpool, (void*)thread_clients_polling, NULL) != THREAD_SUCCESS )
-	{
-		int temp_result = 0;
-		temp_result = thread_pool_add_work(thpool, (void*)thread_clients_polling, NULL);
-		printf("%d \n",temp_result);
-	}
 
-	while (1)
+/* Function declaration for thread function calls */
+void thread_clients_polling()
+{
+	clients_polling(session_list);
+}
+
+void thread_servers_polling()
+{
+	while (TRUE)
 	{
 		servers_polling(server_epoll_fd, server_list, (struct epoll_event**)&server_events);
 	}
+}
+/* */
 
-/* Free allocated memories */
-	main_free(server_list, session_list, thpool);
+/* Thread logic write in here */	
+	if (thread_pool_add_work(thpool, (void*)thread_clients_polling, NULL) != THREAD_SUCCESS )
+	{
+		main_free(server_list, session_list, thpool);
+		return 0;
+	}
 
-	return 0;
+	if (thread_pool_add_work(thpool, (void*)thread_servers_polling, NULL) != THREAD_SUCCESS)
+	{
+		main_free(server_list, session_list, thpool);
+		return 0;
+	}
+/* Main logic write in here */
+	while(TRUE)
+	{
+		/* 메인 로직 : 사용자 옵션 선택 등 구현 */
+	}
+
+return 0;
 }
