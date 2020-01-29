@@ -22,9 +22,9 @@ struct binary_sem
 
 struct job
 {
-	struct job* prev;
-	void (*function)(void* arg);
-	void* arg;
+	struct job* prev; /* pointer to previous job   */
+	void (*function)(void* arg); /* function pointer          */
+	void* arg; /* function's argument       */
 };
 
 struct job_queue
@@ -38,9 +38,9 @@ struct job_queue
 
 struct thread
 {
-	int id;
-	pthread_t thread;
-	struct thread_pool* parent_pool;
+	int id;  /* friendly id               */
+	pthread_t thread; /* pointer to actual thread  */
+	struct thread_pool* parent_pool; /* access to thpool          */
 };
 
 struct thread_pool

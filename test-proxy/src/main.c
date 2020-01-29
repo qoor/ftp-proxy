@@ -10,13 +10,22 @@
 #include "option.h"
 #include "packet.h"
 #include "vector.h"
+#include "session.h"
+#include "client.h"
 
 
 static void main_free(struct hashmap* server_list);
 
+void main_free(struct hashmap* server_list)
+{
+	reset_server_list(server_list);
+	log_free();
+}
+
 int main(int argc, const char** argv)
 {
 	struct hashmap* server_list = NULL;
+	struct vector* session_list = NULL;
 
 	struct option option = {
 		.connection_strings = NULL
@@ -49,6 +58,11 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
+	if ((session_list = vector_init(0)) == NULL)
+	{
+		return 0;
+	}
+
 	if ((server_epoll_fd = epoll_create(MAX_EVENTS)) == -1)
 	{
 		main_free(server_list);
@@ -65,6 +79,8 @@ int main(int argc, const char** argv)
 	/* Main logic write in here */
 	while (1)
 	{
+		/* 추후 멀티 쓰레드로 각각 함수 돌려야함 지금은 둘다 동시에 작동 안함*/
+		client_polling(session_list);
 		servers_polling(server_epoll_fd, server_list, (struct epoll_event**)&server_events);
 	}
 	/* */
@@ -74,10 +90,4 @@ int main(int argc, const char** argv)
 	/* */
 
 	return 0;
-}
-
-void main_free(struct hashmap* server_list)
-{
-	reset_server_list(server_list);
-	log_free();
 }
