@@ -14,7 +14,7 @@
 #include "types.h"
 #include "session.h"
 
-int client_polling(struct vector* session_list)
+int clients_polling(struct vector* session_list)
 {
 	int epoll_fd = 0;
 	int socket_fd = 0;

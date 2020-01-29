@@ -81,15 +81,15 @@ int main(int argc, const char** argv)
 	}
 	
 /* Main logic write in here */
-	void thread_client_polling()
+	void thread_clients_polling()
 	{
-		client_polling(session_list);
+		clients_polling(session_list);
 	}
 	
-	if (thread_pool_add_work(thpool, (void*)thread_client_polling, NULL) != THREAD_SUCCESS )
+	if (thread_pool_add_work(thpool, (void*)thread_clients_polling, NULL) != THREAD_SUCCESS )
 	{
 		int temp_result = 0;
-		temp_result = thread_pool_add_work(thpool, (void*)thread_client_polling, NULL);
+		temp_result = thread_pool_add_work(thpool, (void*)thread_clients_polling, NULL);
 		printf("%d \n",temp_result);
 	}
 
