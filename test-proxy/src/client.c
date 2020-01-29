@@ -12,14 +12,16 @@
 #include <arpa/inet.h>
 
 #include "types.h"
+#include "session.h"
 
-int polling_client()
+int client_polling(struct vector* session_list)
 {
 	int epoll_fd = 0;
 	int socket_fd = 0;
 	int client_fd = 0;
 	int client_addr_len = 0;
 	int active_events = 0;
+	int client_count = 0;
 	int i = 0; /* eventid */
 	struct sockaddr_in bind_addr = { 0, };
 	struct sockaddr_in client_addr = { 0, };
@@ -91,7 +93,8 @@ int polling_client()
 			/* Accept a Client */
 			if (events[i].data.fd == socket_fd)
 			{
-				client_fd = accept(socket_fd, (struct sockaddr*) &client_addr, &client_addr_len);
+				/* accept시 warning 발생할수 있음 : -Wall 옵션때문에 나타나는 문구  http://blog.daum.net/ossogood/8435412 */
+				client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 				if (client_fd == -1)
 				{
 					fprintf(stderr, "ACCEPT ERROR\n");
@@ -100,10 +103,12 @@ int polling_client()
 				event.data.fd = client_fd;
 				fprintf(stderr, "A Client [%s:%d] is Connected : fd[%d] .... \n", inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port),client_fd);
 				
-				/*
-				if (add_session_to_list(,client_fd,SOCKET_TYPE_CLIENT,PORT_TYPE_COMMAND) == SESSION_SUCCESS)  session 리스트에 클라이언트 파일 디스크립터를 등록함 
+				/* session 리스트에 클라이언트 파일 디스크립터를 등록함 */
+				if (add_session_to_list(session_list,client_fd,SOCKET_TYPE_CLIENT,PORT_TYPE_COMMAND) == SESSION_ADD_SUCCESS)  
 				{
-					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1)  추가된 파일 디스크립터를 감지 목록에 추가 
+					client_count = client_count + 1; /* 클라이언트 카운트 증가 */
+					/* 추가된 파일 디스크립터를 감지 목록에 추가 */
+					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) 
 					{
 						return EPOLL_CTL_FAILED;
 					}
@@ -112,7 +117,6 @@ int polling_client()
 
 					}
 				}
-				*/
 			}
 		}
 	}

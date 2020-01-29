@@ -14,24 +14,24 @@ enum thread_error_type
 
 struct job
 {
-	struct job* prev;
-	void (*function)(void* arg);
-	void* arg;
+	struct job* prev; /* pointer to previous job   */
+	void (*function)(void* arg); /* function pointer          */
+	void* arg; /* function's argument       */
 };
 
 struct job_queue
 {
-	pthread_mutex_t io_mutex;
-	struct job* front_job;
-	struct job* rear_job;
-	int job_count;
+	pthread_mutex_t io_mutex;  /* used for queue r/w access */
+	struct job* front_job; /* pointer to front of queue */
+	struct job* rear_job;  /* pointer to rear  of queue */
+	int job_count;  /* number of jobs in queue   */
 };
 
 struct thread
 {
-	int id;
-	pthread_t thread;
-	struct thread_pool* parent_pool;
+	int id;  /* friendly id               */
+	pthread_t thread; /* pointer to actual thread  */
+	struct thread_pool* parent_pool; /* access to thpool          */
 };
 
 struct thread_pool

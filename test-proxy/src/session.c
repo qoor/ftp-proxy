@@ -48,7 +48,7 @@ int add_session_to_list(struct vector* session_list, int socket_fd, int socket_t
 	}
 
 	vector_push_back(session_list, new_session);
-	return SESSION_SUCCESS;
+	return SESSION_ADD_SUCCESS;
 }
 
 int remove_session_from_list(struct vector* session_list, struct session* target_session)
@@ -73,7 +73,7 @@ int remove_session_from_list(struct vector* session_list, struct session* target
 		{
 			free(current_session);
 			vector_erase(session_list, i);
-			return SESSION_SUCCESS;
+			return SESSION_ADD_SUCCESS;
 		}
 
 	}
