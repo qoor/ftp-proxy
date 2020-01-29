@@ -31,6 +31,7 @@ int vector_pop_back(struct vector* vector);
 void* vector_get(struct vector* vector, int index);
 int vector_set(struct vector* vector, int index, void* object);
 int vector_clear(struct vector* vector);
+int vector_free(struct vector* vector);
 
 #endif
 
