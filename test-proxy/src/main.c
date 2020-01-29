@@ -46,7 +46,6 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 
-
 	if (get_options(&option, argc, argv) != OPTION_GET_SUCCESS)
 	{
 		main_free(server_list);
@@ -58,7 +57,6 @@ int main(int argc, const char** argv)
 		main_free(server_list);
 		return 0;
 	}
-
 
 	if ((session_list = vector_init(0)) == NULL)
 	{

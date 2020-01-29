@@ -19,7 +19,6 @@ int client_polling(struct vector* session_list)
 	int epoll_fd = 0;
 	int socket_fd = 0;
 	int client_fd = 0;
-	int client_addr_len = 0;
 	int active_events = 0;
 	int client_count = 0;
 	int i = 0; /* eventid */
@@ -27,6 +26,7 @@ int client_polling(struct vector* session_list)
 	struct sockaddr_in client_addr = { 0, };
 	struct epoll_event event = { 0, };
 	struct epoll_event events[MAX_CLIENT_EVENTS] = { {0,}, };
+	socklen_t client_addr_len = 0;
 
 
 	/* Creating an EPOLL object */
@@ -43,10 +43,10 @@ int client_polling(struct vector* session_list)
 		return SOCKET_CREATE_FAILED;
 	}
 
-	memset(&bind_addr, 0, sizeof(bind_addr));
-	bind_addr.sin_family = AF_INET;
-	bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	bind_addr.sin_port = htons(BIND_CLIENT_PORT);
+	memset(&bind_addr, 0x00, sizeof(bind_addr));
+	bind_addr.sin_family 		= AF_INET;
+	bind_addr.sin_addr.s_addr 	= htonl(INADDR_ANY);
+	bind_addr.sin_port 			= htons(BIND_CLIENT_PORT);
 
 	/* Bind Socket */
 	if (bind(socket_fd, (struct sockaddr*) &bind_addr, sizeof(bind_addr)) == -1)
@@ -55,7 +55,7 @@ int client_polling(struct vector* session_list)
 	}
 
 	/* Listen Socket */
-	if (listen(socket_fd, 5) < 0)
+	if (listen(socket_fd, 5) == -1)
 	{
 		return SOCKET_LISTEN_FAILED;
 	}
@@ -93,7 +93,6 @@ int client_polling(struct vector* session_list)
 			/* Accept a Client */
 			if (events[i].data.fd == socket_fd)
 			{
-				/* accept시 warning 발생할수 있음 : -Wall 옵션때문에 나타나는 문구  http://blog.daum.net/ossogood/8435412 */
 				client_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &client_addr_len);
 				if (client_fd == -1)
 				{
