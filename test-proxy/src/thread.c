@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <malloc.h>
+#include <time.h>
+#include <unistd.h>
+#include <signal.h>
 
 #include <sys/prctl.h>
 
@@ -12,6 +15,97 @@
 
 static int threads_on_hold = FALSE;
 static int threads_keep_alive = TRUE;
+
+static struct binary_sem* binary_sem_create(int state_value)
+{
+	struct binary_sem* new_binary_sem = NULL;
+
+	errno = 0;
+
+	if (state_value < 0 || state_value > 1)
+	{
+		errno = THREAD_INVALID_PARAM;
+		return NULL;
+	}
+
+	new_binary_sem = (struct binary_sem*)malloc(sizeof(struct binary_sem));
+	if (new_binary_sem == NULL)
+	{
+		errno = THREAD_ALLOC_FAILED;
+		return NULL;
+	}
+	
+	pthread_mutex_init(&new_binary_sem->mutex, NULL);
+	pthread_cond_init(&new_binary_sem->condition, NULL);
+
+	return new_binary_sem;
+}
+
+static int binary_sem_reset(struct binary_sem** target_binary_sem)
+{
+	if (target_binary_sem == NULL || *target_binary_sem == NULL)
+	{
+		return THREAD_INVALID;
+	}
+
+	free(*target_binary_sem);
+	*target_binary_sem = binary_sem_create(0);
+	if (*target_binary_sem == NULL)
+	{
+		return THREAD_ALLOC_FAILED;
+	}
+
+	return THREAD_SUCCESS;
+}
+
+static int binary_sem_post(struct binary_sem* target_binary_sem)
+{
+	if (target_binary_sem == NULL)
+	{
+		return THREAD_INVALID;
+	}
+
+	pthread_mutex_lock(&target_binary_sem->mutex);
+	target_binary_sem->state_value = 1;
+	pthread_cond_signal(&target_binary_sem->condition);
+	pthread_mutex_unlock(&target_binary_sem->mutex);
+
+	return THREAD_SUCCESS;
+}
+
+static int binary_sem_post_broadcast(struct binary_sem* target_binary_sem)
+{
+	if (target_binary_sem == NULL)
+	{
+		return THREAD_INVALID;
+	}
+
+	pthread_mutex_lock(&target_binary_sem->mutex);
+	target_binary_sem->state_value = 1;
+	pthread_cond_broadcast(&target_binary_sem->condition);
+	pthread_mutex_unlock(&target_binary_sem->mutex);
+
+	return THREAD_SUCCESS;
+}
+
+static int binary_sem_wait(struct binary_sem* target_binary_sem)
+{
+	if (target_binary_sem == NULL)
+	{
+		return THREAD_INVALID;
+	}
+
+	pthread_mutex_lock(&target_binary_sem->mutex);
+	while (target_binary_sem->state_value != 1)
+	{
+		pthread_cond_wait(&target_binary_sem->condition, &target_binary_sem->mutex);
+	}
+
+	target_binary_sem->state_value = 0;
+	pthread_mutex_unlock(&target_binary_sem->mutex);
+
+	return THREAD_SUCCESS;
+}
 
 static struct job_queue* job_queue_create()
 {
@@ -23,6 +117,13 @@ static struct job_queue* job_queue_create()
 	if (new_job_queue == NULL)
 	{
 		errno = THREAD_ALLOC_FAILED;
+		return NULL;
+	}
+
+	new_job_queue->has_jobs = binary_sem_create(0);
+	if (new_job_queue->has_jobs == NULL)
+	{
+		free(new_job_queue);
 		return NULL;
 	}
 
@@ -56,6 +157,8 @@ static int job_queue_push(struct job_queue* target_job_queue, struct job* new_jo
 	}
 	
 	++target_job_queue->job_count;
+	binary_sem_post(target_job_queue->has_jobs);
+
 	pthread_mutex_unlock(&target_job_queue->io_mutex);
 	
 	return THREAD_SUCCESS;
@@ -88,6 +191,8 @@ static struct job* job_queue_pull(struct job_queue* current_job_queue)
 	{
 		current_job_queue->front_job = current_job->prev;
 		--current_job_queue->job_count;
+
+		binary_sem_post(current_job_queue->has_jobs);
 	}
 
 	pthread_mutex_unlock(&current_job_queue->io_mutex);
@@ -115,13 +220,24 @@ static void job_queue_clear(struct job_queue* target_job_queue)
 
 	target_job_queue->front_job = NULL;
 	target_job_queue->rear_job = NULL;
+	binary_sem_reset(&target_job_queue->has_jobs);
 	target_job_queue->job_count = 0;
-	pthread_mutex_destroy(&target_job_queue->io_mutex);
 }
 
 static void job_queue_free(struct job_queue* target_job_queue)
 {
 	job_queue_clear(target_job_queue);
+	free(target_job_queue->has_jobs);
+	free(target_job_queue);
+}
+
+static void thread_hold(int signal_number)
+{
+	threads_on_hold = TRUE;
+	while (threads_on_hold == TRUE)
+	{
+		sleep(1);
+	}
 }
 
 static void thread_do(struct thread* current_thread)
@@ -131,31 +247,43 @@ static void thread_do(struct thread* current_thread)
 	void (*function_buffer)(void*) = NULL;
 	void* arg_buffer = NULL;
 	struct job* pulled_job = NULL;
+	struct sigaction action;
 
 	if (current_thread == NULL)
 	{
 		return;
 	}
 
+	sigemptyset(&action.sa_mask);
+	action.sa_flags = 0;
+	action.sa_handler = thread_hold;
+	if (sigaction(SIGUSR1, &action, NULL) == -1)
+	{
+		/* Do something */
+	}
+
+
 	parent_thread_pool = current_thread->parent_pool;
 
 	sprintf(thread_name, "thread-pool-%d", current_thread->id);
 	prctl(PR_SET_NAME, thread_name);
 
-	pthread_mutex_lock(&parent_thread_pool->alive_count_mutex);
+	pthread_mutex_lock(&parent_thread_pool->thread_count_mutex);
 	++parent_thread_pool->thread_alive_count;
-	pthread_mutex_unlock(&parent_thread_pool->alive_count_mutex);
+	pthread_mutex_unlock(&parent_thread_pool->thread_count_mutex);
 
 	while (threads_keep_alive == TRUE)
 	{
+		binary_sem_wait(parent_thread_pool->job_queue->has_jobs);
+
 		if (threads_keep_alive == FALSE)
 		{
 			break;
 		}
 		
-		pthread_mutex_lock(&parent_thread_pool->alive_count_mutex);
+		pthread_mutex_lock(&parent_thread_pool->thread_count_mutex);
 		++parent_thread_pool->thread_working_count;
-		pthread_mutex_unlock(&parent_thread_pool->alive_count_mutex);
+		pthread_mutex_unlock(&parent_thread_pool->thread_count_mutex);
 
 		pulled_job = job_queue_pull(parent_thread_pool->job_queue);
 		if (pulled_job != NULL)
@@ -167,21 +295,21 @@ static void thread_do(struct thread* current_thread)
 			free(pulled_job);
 		}
 
-		pthread_mutex_lock(&parent_thread_pool->alive_count_mutex);
+		pthread_mutex_lock(&parent_thread_pool->thread_count_mutex);
 		--parent_thread_pool->thread_working_count;
 		if (parent_thread_pool->thread_working_count == 0)
 		{
-			/* TODO: Should send signal */
+			pthread_cond_signal(&parent_thread_pool->threads_all_idle);
 		}
-		pthread_mutex_unlock(&parent_thread_pool->alive_count_mutex);
+		pthread_mutex_unlock(&parent_thread_pool->thread_count_mutex);
 	}
 
-	pthread_mutex_lock(&parent_thread_pool->alive_count_mutex);
+	pthread_mutex_lock(&parent_thread_pool->thread_count_mutex);
 	--parent_thread_pool->thread_alive_count;
-	pthread_mutex_unlock(&parent_thread_pool->alive_count_mutex);
+	pthread_mutex_unlock(&parent_thread_pool->thread_count_mutex);
 }
 
-static struct thread* thread_create(struct thread_pool* parent_thread_pool)
+static struct thread* thread_create(struct thread_pool* parent_thread_pool, int thread_id)
 {
 	struct thread* new_thread = NULL;
 
@@ -200,10 +328,10 @@ static struct thread* thread_create(struct thread_pool* parent_thread_pool)
 		return NULL;
 	}
 
-	vector_push_back(parent_thread_pool->threads, new_thread);
+	parent_thread_pool->threads[thread_id] = new_thread;
 
 	new_thread->parent_pool = parent_thread_pool;
-	new_thread->id = parent_thread_pool->threads->size - 1;
+	new_thread->id = thread_id;
 
 	pthread_create(&new_thread->thread, NULL, (void*)thread_do, new_thread);
 	pthread_detach(new_thread->thread);
@@ -238,7 +366,7 @@ struct thread_pool* thread_pool_create(int max_threads)
 		return NULL;
 	}
 
-	new_thread_pool->threads = vector_init(max_threads);
+	new_thread_pool->threads = (struct thread**)calloc(max_threads, sizeof(struct thread*));
 	if (new_thread_pool->threads == NULL)
 	{
 		errno = THREAD_ALLOC_FAILED;
@@ -248,19 +376,24 @@ struct thread_pool* thread_pool_create(int max_threads)
 
 	for ( ; i < max_threads; ++i)
 	{
-		vector_push_back(new_thread_pool->threads, thread_create(new_thread_pool));
+		thread_create(new_thread_pool, i);
 	}
 
 	new_thread_pool->thread_alive_count = 0;
 	new_thread_pool->thread_working_count = 0;
-	pthread_mutex_init(&new_thread_pool->alive_count_mutex, NULL);
+	pthread_mutex_init(&new_thread_pool->thread_count_mutex, NULL);
+	pthread_cond_init(&new_thread_pool->threads_all_idle, NULL);
 
 	return NULL;
 }
 
 int thread_pool_free(struct thread_pool* target_thread_pool)
 {
-	struct vector* threads = NULL;
+	const float TIMEOUT = 1.0;
+	float time_passed = 0.0;
+	time_t start;
+	time_t end;
+	int thread_count = 0;
 	int i = 0;
 
 	if (target_thread_pool == NULL)
@@ -268,30 +401,114 @@ int thread_pool_free(struct thread_pool* target_thread_pool)
 		return THREAD_INVALID;
 	}
 
-	if (target_thread_pool->job_queue != NULL)
+	threads_keep_alive = 0;
+
+	thread_count = target_thread_pool->thread_alive_count;
+
+	time(&start);
+	while (time_passed < TIMEOUT && target_thread_pool->thread_alive_count > 0)
 	{
-		job_queue_free(target_thread_pool->job_queue);
-		free(target_thread_pool->job_queue);
-		target_thread_pool->job_queue = NULL;
+		binary_sem_post_broadcast(target_thread_pool->job_queue->has_jobs);
+
+		time(&end);
+		time_passed = difftime(end, start);
 	}
 
+	while (target_thread_pool->thread_alive_count > 0)
+	{
+		binary_sem_post_broadcast(target_thread_pool->job_queue->has_jobs);
+		sleep(1);
+	}
+
+	job_queue_free(target_thread_pool->job_queue);
+	target_thread_pool->job_queue = NULL;
+	
 	if (target_thread_pool->threads != NULL)
 	{
-		threads = target_thread_pool->threads;
-		for (i = 0; i < threads->size; ++i)
+		for (i = 0; i < thread_count; ++i)
 		{
-			if (threads->container[i] != NULL)
+			if (target_thread_pool->threads[i] != NULL)
 			{
-				free(threads->container[i]);
-				threads->container[i] = NULL;
+				free(target_thread_pool->threads[i]);
+				target_thread_pool->threads[i] = NULL;
 			}
 		}
 
-		free(threads);
+		free(target_thread_pool->threads);
 		target_thread_pool->threads = NULL;
 	}
 
 	free(target_thread_pool);
+
+	return THREAD_SUCCESS;
+}
+
+int thread_pool_wait(struct thread_pool* target_thread_pool)
+{
+	if (target_thread_pool == NULL)
+	{
+		return THREAD_INVALID;
+	}
+
+	pthread_mutex_lock(&target_thread_pool->thread_count_mutex);
+	while (target_thread_pool->job_queue->job_count > 0 || target_thread_pool->thread_working_count > 0)
+	{
+		pthread_cond_wait(&target_thread_pool->threads_all_idle, &target_thread_pool->thread_count_mutex);
+	}
+	pthread_mutex_unlock(&target_thread_pool->thread_count_mutex);
+	
+	return THREAD_SUCCESS;
+}
+
+int thread_pool_pause(struct thread_pool* target_thread_pool)
+{
+	int i = 0;
+	int thread_count = 0;
+
+	if (target_thread_pool == NULL)
+	{
+		return THREAD_INVALID;
+	}
+
+	for ( ; i < thread_count; ++i)
+	{
+		pthread_kill(((struct thread*)target_thread_pool->threads[i])->thread, SIGUSR1);
+	}
+
+	return THREAD_SUCCESS;
+}
+
+int thread_pool_resume(struct thread_pool* target_thread_pool)
+{
+	if (target_thread_pool == NULL)
+	{
+		return THREAD_INVALID;
+	}
+
+	threads_on_hold = FALSE;
+
+	return THREAD_SUCCESS;
+}
+
+int thread_pool_add_work(struct thread_pool* target_thread_pool, void (*function_ptr)(void*), void* arg_ptr)
+{
+	struct job* new_job = NULL;
+
+	if (target_thread_pool == NULL)
+	{
+		return THREAD_INVALID;
+	}
+
+	new_job = (struct job*)malloc(sizeof(struct job));
+	if (new_job == NULL)
+	{
+		return THREAD_ALLOC_FAILED;
+	}
+
+	new_job->function = function_ptr;
+	new_job->arg = arg_ptr;
+	job_queue_push(target_thread_pool->job_queue, new_job);
+
 	return THREAD_SUCCESS;
 }
 

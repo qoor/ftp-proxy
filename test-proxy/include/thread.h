@@ -9,7 +9,15 @@ enum thread_error_type
 {
 	THREAD_SUCCESS,
 	THREAD_INVALID,
+	THREAD_INVALID_PARAM,
 	THREAD_ALLOC_FAILED
+};
+
+struct binary_sem
+{
+	pthread_mutex_t mutex;
+	pthread_cond_t condition;
+	int state_value;
 };
 
 struct job
@@ -21,10 +29,11 @@ struct job
 
 struct job_queue
 {
-	pthread_mutex_t io_mutex;  /* used for queue r/w access */
-	struct job* front_job; /* pointer to front of queue */
-	struct job* rear_job;  /* pointer to rear  of queue */
-	int job_count;  /* number of jobs in queue   */
+	pthread_mutex_t io_mutex;
+	struct job* front_job;
+	struct job* rear_job;
+	struct binary_sem* has_jobs;
+	int job_count;
 };
 
 struct thread
@@ -36,15 +45,20 @@ struct thread
 
 struct thread_pool
 {
-	struct vector* threads;
+	struct thread** threads;
 	int thread_alive_count;
 	int thread_working_count;
 	struct job_queue* job_queue;
-	pthread_mutex_t alive_count_mutex;
+	pthread_mutex_t thread_count_mutex;
+	pthread_cond_t threads_all_idle;
 };
 
 struct thread_pool* thread_pool_create(int max_threads);
 int thread_pool_free(struct thread_pool* target_thread_pool);
+int thread_pool_wait(struct thread_pool* target_thread_pool);
+int thread_pool_pause(struct thread_pool* target_thread_pool);
+int thread_pool_resume(struct thread_pool* target_thread_pool);
+int thread_pool_add_work(struct thread_pool* target_thread_pool, void (*function_ptr)(void*), void* arg_ptr);
 
 #endif
 

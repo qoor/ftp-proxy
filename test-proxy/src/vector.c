@@ -216,3 +216,4 @@ int vector_free(struct vector* vector)
 
 	return VECTOR_SUCCESS;
 }
+

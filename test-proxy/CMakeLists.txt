@@ -27,3 +27,7 @@ set (SOURCE_FILE
 add_executable (test-proxy ${SOURCE_FILE})
 
 target_include_directories (test-proxy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries (test-proxy pthread)
+
+set_source_files_properties (src/thread.c PROPERTIES COMPILE_FLAGS "-std=gnu90")
+

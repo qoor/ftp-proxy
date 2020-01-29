@@ -1,5 +1,2 @@
-@cc
+@compile_commands.json
 
-%c -std=c90
-%c -Wall
-%c -Iinclude
