@@ -14,7 +14,7 @@
 #include "types.h"
 #include "session.h"
 
-int client_polling(struct vector* session_list)
+int clients_polling(struct vector* session_list)
 {
 	int epoll_fd = 0;
 	int socket_fd = 0;
@@ -28,18 +28,19 @@ int client_polling(struct vector* session_list)
 	struct epoll_event events[MAX_CLIENT_EVENTS] = { {0,}, };
 	socklen_t client_addr_len = 0;
 
-
+	
 	/* Creating an EPOLL object */
 	epoll_fd = epoll_create(MAX_CLIENT_EVENTS);
 	if (epoll_fd == -1)
 	{
+		fprintf(stderr,"EPOLL_CREATE_FAILED \n");
 		return EPOLL_CREATE_FAILED;
 	}
-
 	/* Create Socket */
 	socket_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (socket_fd < 0)
 	{
+		fprintf(stderr,"SOCKET_CREATE_FAILED \n");
 		return SOCKET_CREATE_FAILED;
 	}
 
@@ -51,12 +52,14 @@ int client_polling(struct vector* session_list)
 	/* Bind Socket */
 	if (bind(socket_fd, (struct sockaddr*) &bind_addr, sizeof(bind_addr)) == -1)
 	{
+		fprintf(stderr,"SOCKET_BIND_FAILED \n");
 		return SOCKET_BIND_FAILED;
 	}
 
 	/* Listen Socket */
 	if (listen(socket_fd, 5) == -1)
 	{
+		fprintf(stderr,"SOCKET_LISTEN_FAILED \n");
 		return SOCKET_LISTEN_FAILED;
 	}
 
@@ -66,11 +69,11 @@ int client_polling(struct vector* session_list)
 	event.data.fd = socket_fd;
 	if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, socket_fd, &event) == -1)
 	{
+		fprintf(stderr,"EPOLL_CTL_FAILED \n");
 		return EPOLL_CTL_FAILED;
 	}
-
 	client_addr_len = sizeof(client_addr);
-	printf("Start Monitoring ... \n");
+	printf("Start Monitoring [Clients] ... \n");
 	while (TRUE)
 	{
 		/* Epoll Monitoring */
@@ -84,6 +87,7 @@ int client_polling(struct vector* session_list)
 			}
 			else
 			{
+				fprintf(stderr,"EPOLL_WAIT_FAILED \n");
 				return EPOLL_WAIT_FAILED;
 			}
 		}
@@ -105,10 +109,14 @@ int client_polling(struct vector* session_list)
 				/* session 리스트에 클라이언트 파일 디스크립터를 등록함 */
 				if (add_session_to_list(session_list,client_fd,SOCKET_TYPE_CLIENT,PORT_TYPE_COMMAND) == SESSION_ADD_SUCCESS)  
 				{
+					int test_fd = 0;
+					get_session_from_list(session_list, test_fd, SOCKET_TYPE_CLIENT, PORT_TYPE_COMMAND);
+					printf("list 에 추가된 fd 를 불러왔습니다 [%d]\n", test_fd);
 					client_count = client_count + 1; /* 클라이언트 카운트 증가 */
 					/* 추가된 파일 디스크립터를 감지 목록에 추가 */
 					if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_fd, &event) == -1) 
 					{
+						fprintf(stderr,"EPOLL_CTL_FAILED \n");
 						return EPOLL_CTL_FAILED;
 					}
 					else

@@ -21,6 +21,7 @@ set (SOURCE_FILE
 	"include/hashmap.h"
 	"include/session.h"
 	"include/thread.h"
+	#include/types.h"
 )
 
 add_executable (test-proxy ${SOURCE_FILE})

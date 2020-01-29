@@ -1,5 +1,6 @@
 #include "thread.h"
 
+#include <stdlib.h>
 #include <errno.h>
 #include <malloc.h>
 #include <time.h>
@@ -340,23 +341,26 @@ static struct thread* thread_create(struct thread_pool* parent_thread_pool, int 
 
 struct thread_pool* thread_pool_create(int max_threads)
 {
-	struct thread_pool* new_thread_pool = NULL;
-	int i = 0;
-
-	errno = 0;
-
 	if (max_threads < 0)
 	{
 		max_threads = 0;
 	}
 
+	struct thread_pool* new_thread_pool = NULL;
+	int i = 0;
+	errno = 0;
+
+	/* Make new thread pool */
 	new_thread_pool = (struct thread_pool*)malloc(sizeof(struct thread_pool));
 	if (new_thread_pool == NULL)
 	{
 		errno = THREAD_ALLOC_FAILED;
 		return NULL;
 	}
+	new_thread_pool->thread_alive_count = 0;
+	new_thread_pool->thread_working_count = 0;
 
+	/* Initialise the job queue */
 	new_thread_pool->job_queue = job_queue_create();
 	if (new_thread_pool->job_queue == NULL)
 	{
@@ -365,25 +369,24 @@ struct thread_pool* thread_pool_create(int max_threads)
 		return NULL;
 	}
 
-	new_thread_pool->threads = (struct thread**)calloc(max_threads, sizeof(struct thread*));
+	/* Make threads in pool */
+	new_thread_pool->threads = (struct thread**)malloc(max_threads * sizeof(struct thread*));
 	if (new_thread_pool->threads == NULL)
 	{
 		errno = THREAD_ALLOC_FAILED;
-		thread_pool_free(new_thread_pool);
+		thread_pool_free(new_thread_pool); /* 함수 안에 job_queue_free() 포함 되어있음*/
 		return NULL;
 	}
+
+	pthread_mutex_init(&new_thread_pool->thread_count_mutex, NULL);
+	pthread_cond_init(&new_thread_pool->threads_all_idle, NULL);
 
 	for ( ; i < max_threads; ++i)
 	{
 		thread_create(new_thread_pool, i);
 	}
 
-	new_thread_pool->thread_alive_count = 0;
-	new_thread_pool->thread_working_count = 0;
-	pthread_mutex_init(&new_thread_pool->thread_count_mutex, NULL);
-	pthread_cond_init(&new_thread_pool->threads_all_idle, NULL);
-
-	return NULL;
+	return new_thread_pool;
 }
 
 int thread_pool_free(struct thread_pool* target_thread_pool)

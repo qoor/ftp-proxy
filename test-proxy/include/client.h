@@ -19,5 +19,5 @@ enum client_error_type
 };
 /* */
 
-int client_polling(struct vector* session_list);
+int clients_polling(struct vector* session_list);
 #endif
