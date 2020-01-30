@@ -13,7 +13,6 @@
 
 #define MAX_THREAD_NAME_SIZE (128)
 
-static int threads_on_hold = FALSE;
 static int threads_keep_alive = TRUE;
 
 static struct binary_sem* binary_sem_create(int state_value)
@@ -231,15 +230,6 @@ static void job_queue_free(struct job_queue* target_job_queue)
 	free(target_job_queue);
 }
 
-static void thread_hold(int signal_number)
-{
-	threads_on_hold = TRUE;
-	while (threads_on_hold == TRUE)
-	{
-		sleep(1);
-	}
-}
-
 static void thread_do(struct thread* current_thread)
 {
 	char thread_name[MAX_THREAD_NAME_SIZE] = { 0, };
@@ -247,21 +237,11 @@ static void thread_do(struct thread* current_thread)
 	void (*function_buffer)(void*) = NULL;
 	void* arg_buffer = NULL;
 	struct job* pulled_job = NULL;
-	struct sigaction action;
 
 	if (current_thread == NULL)
 	{
 		return;
 	}
-
-	sigemptyset(&action.sa_mask);
-	action.sa_flags = 0;
-	action.sa_handler = thread_hold;
-	if (sigaction(SIGUSR1, &action, NULL) == -1)
-	{
-		/* Do something */
-	}
-
 
 	parent_thread_pool = current_thread->parent_pool;
 
@@ -341,13 +321,14 @@ static struct thread* thread_create(struct thread_pool* parent_thread_pool, int 
 
 struct thread_pool* thread_pool_create(int max_threads)
 {
+	struct thread_pool* new_thread_pool = NULL;
+	int i = 0;
+
 	if (max_threads < 0)
 	{
 		max_threads = 0;
 	}
 
-	struct thread_pool* new_thread_pool = NULL;
-	int i = 0;
 	errno = 0;
 
 	/* Make new thread pool */
@@ -381,7 +362,7 @@ struct thread_pool* thread_pool_create(int max_threads)
 	pthread_mutex_init(&new_thread_pool->thread_count_mutex, NULL);
 	pthread_cond_init(&new_thread_pool->threads_all_idle, NULL);
 
-	for ( ; i < max_threads; ++i)
+	for (i = 0; i < max_threads; ++i)
 	{
 		thread_create(new_thread_pool, i);
 	}
@@ -459,36 +440,6 @@ int thread_pool_wait(struct thread_pool* target_thread_pool)
 	}
 	pthread_mutex_unlock(&target_thread_pool->thread_count_mutex);
 	
-	return THREAD_SUCCESS;
-}
-
-int thread_pool_pause(struct thread_pool* target_thread_pool)
-{
-	int i = 0;
-	int thread_count = 0;
-
-	if (target_thread_pool == NULL)
-	{
-		return THREAD_INVALID;
-	}
-
-	for ( ; i < thread_count; ++i)
-	{
-		pthread_kill(((struct thread*)target_thread_pool->threads[i])->thread, SIGUSR1);
-	}
-
-	return THREAD_SUCCESS;
-}
-
-int thread_pool_resume(struct thread_pool* target_thread_pool)
-{
-	if (target_thread_pool == NULL)
-	{
-		return THREAD_INVALID;
-	}
-
-	threads_on_hold = FALSE;
-
 	return THREAD_SUCCESS;
 }
 

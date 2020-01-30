@@ -21,8 +21,8 @@
 },
 {
   "directory": "/root/projects/test-proxy/test-proxy",
-  "command": "/usr/bin/cc  -I/root/projects/test-proxy/test-proxy/include   -std=c90 -Wall -g   -o CMakeFiles/test-proxy.dir/src/packet.c.o   -c /root/projects/test-proxy/test-proxy/src/packet.c",
-  "file": "/root/projects/test-proxy/test-proxy/src/packet.c"
+  "command": "/usr/bin/cc  -I/root/projects/test-proxy/test-proxy/include   -std=c90 -Wall -g   -o CMakeFiles/test-proxy.dir/src/socket.c.o   -c /root/projects/test-proxy/test-proxy/src/socket.c",
+  "file": "/root/projects/test-proxy/test-proxy/src/socket.c"
 },
 {
   "directory": "/root/projects/test-proxy/test-proxy",
@@ -46,7 +46,7 @@
 },
 {
   "directory": "/root/projects/test-proxy/test-proxy",
-  "command": "/usr/bin/cc  -I/root/projects/test-proxy/test-proxy/include   -std=c90 -Wall -g   -std=gnu90 -o CMakeFiles/test-proxy.dir/src/thread.c.o   -c /root/projects/test-proxy/test-proxy/src/thread.c",
+  "command": "/usr/bin/cc  -I/root/projects/test-proxy/test-proxy/include   -std=c90 -Wall -g   -o CMakeFiles/test-proxy.dir/src/thread.c.o   -c /root/projects/test-proxy/test-proxy/src/thread.c",
   "file": "/root/projects/test-proxy/test-proxy/src/thread.c"
 }
 ]

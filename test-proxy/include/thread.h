@@ -56,8 +56,6 @@ struct thread_pool
 struct thread_pool* thread_pool_create(int max_threads);
 int thread_pool_free(struct thread_pool* target_thread_pool);
 int thread_pool_wait(struct thread_pool* target_thread_pool);
-int thread_pool_pause(struct thread_pool* target_thread_pool);
-int thread_pool_resume(struct thread_pool* target_thread_pool);
 int thread_pool_add_work(struct thread_pool* target_thread_pool, void (*function_ptr)(void*), void* arg_ptr);
 
 #endif
