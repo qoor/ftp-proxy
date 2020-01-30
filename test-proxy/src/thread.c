@@ -370,7 +370,7 @@ struct thread_pool* thread_pool_create(int max_threads)
 	}
 
 	/* Make threads in pool */
-	new_thread_pool->threads = (struct thread**)malloc(max_threads * sizeof(struct thread*));
+	new_thread_pool->threads = (struct thread**)calloc(max_threads, sizeof(struct thread*));
 	if (new_thread_pool->threads == NULL)
 	{
 		errno = THREAD_ALLOC_FAILED;
