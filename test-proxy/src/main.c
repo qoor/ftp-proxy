@@ -41,7 +41,7 @@ int main(int argc, const char** argv)
 	struct option option = { .connection_strings = NULL };
 	int server_epoll_fd = -1;
 
-/* Initializing */
+	/* Initializing */
 	/* THREAD INIT */
 	thpool = thread_pool_create(10);
 
