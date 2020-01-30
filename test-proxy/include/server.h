@@ -7,6 +7,7 @@
 #include "vector.h"
 #include "session.h"
 #include "socket.h"
+#include "list.h"
 
 #define MAX_EVENTS (254) /* Amount of file descriptor of monitoring */
 #define EVENT_TIMEOUT (0) /* EPOLL event timeout as milliseconds */
@@ -17,8 +18,8 @@
 /* Server info structure */
 struct server
 {
-	struct socket* socket[MAX_SESSION_SOCKETS];
 	struct sockaddr_in socket_address;
+	struct list list;
 };
 /* */
 
@@ -35,10 +36,9 @@ enum server_error_type
 };
 /* */
 
-int server_remove_from_list(struct vector* server_list, const struct server* target_server);
-int server_remove_from_list_index(struct vector* server_list, int index);
-int server_register_servers_to_epoll(struct vector* server_list, int target_epoll_fd);
-int server_polling(int epoll_fd, const struct server* server_ptr);
+int server_remove_from_list(struct server* target_server);
+int server_register_servers_to_epoll(struct list* session_list, int target_epoll_fd);
+int server_polling(int epoll_fd, const struct list* session_list);
 
 #endif
 

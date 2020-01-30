@@ -6,22 +6,37 @@
 
 #include "types.h"
 
-static int session_cmp(const struct session* session1, const struct session* session2)
+static int session_socket_cmp(const struct session* source_session, int socket_fd, int socket_type, int port_type)
 {
-	if (session1 == session2)
+	int source_socket_fd = 0;
+
+	if (socket_type == SOCKET_TYPE_CLIENT)
 	{
-		return TRUE;
+		if (port_type == PORT_TYPE_COMMAND)
+		{
+			source_socket_fd = source_session->client_command_socket->socket_fd;
+		}
+		else
+		{
+			source_socket_fd = source_session->client_data_socket->socket_fd;
+		}
+	}
+	else
+	{
+		if (port_type == PORT_TYPE_COMMAND)
+		{
+			source_socket_fd = source_session->server_command_socket->socket_fd;
+		}
+		else
+		{
+			source_socket_fd = source_session->server_data_socket->socket_fd;
+		}
 	}
 
-	if (session1 == NULL || session2 == NULL)
-	{
-		return FALSE;
-	}
-
-	return memcmp(session1, session2, sizeof(struct session));
+	return (socket_fd == source_socket_fd);
 }
 
-int add_session_to_list(struct vector* session_list, int socket_fd, int socket_type, int port_type)
+int add_session_to_list(struct list* session_list, int socket_fd, int socket_type, int port_type)
 {
 	struct session* new_session = NULL;
 
@@ -47,15 +62,18 @@ int add_session_to_list(struct vector* session_list, int socket_fd, int socket_t
 		return SESSION_ALLOC_FAILED;
 	}
 
-	vector_push_back(session_list, new_session);
+	new_session->client_command_socket = NULL;
+	new_session->client_data_socket = NULL;
+	new_session->server_command_socket = NULL;
+	new_session->server_data_socket = NULL;
+
+	LIST_ADD(session_list, new_session->list);
+
 	return SESSION_ADD_SUCCESS;
 }
 
-int remove_session_from_list(struct vector* session_list, struct session* target_session)
+int remove_session_from_list(struct list* session_list, struct session* target_session)
 {
-	struct session* current_session = NULL;
-	int i = 0;
-
 	if (session_list == NULL)
 	{
 		return SESSION_INVALID_LIST;
@@ -66,22 +84,16 @@ int remove_session_from_list(struct vector* session_list, struct session* target
 		return SESSION_INVALID_SESSION;
 	}
 
-	for ( ; i < session_list->size; ++i)
+	if (target_session->client_command_socket != NULL)
 	{
-		current_session = session_list->container[i];
-		if (session_cmp(current_session, target_session))
-		{
-			free(current_session);
-			vector_erase(session_list, i);
-			return SESSION_ADD_SUCCESS;
-		}
+		socket_
 
-	}
-	
+	LIST_DEL(target_session->list);
+
 	return SESSION_INVALID_SESSION;
 }
 
-struct session* get_session_from_list(const struct vector* session_list, int socket_fd, int socket_type, int port_type)
+struct session* get_session_from_list(const struct list* session_list, int socket_fd, int socket_type, int port_type)
 {
 	struct session* current_session = NULL;
 	int i = 0;
@@ -112,15 +124,9 @@ struct session* get_session_from_list(const struct vector* session_list, int soc
 		return NULL;
 	}
 
-	for ( ; i < session_list->size; ++i)
+	list_for_each_entry(current_session, session_list, list)
 	{
-		current_session = session_list->container[i];
-
-		if (socket_type == SOCKET_TYPE_CLIENT && current_session->client_socket[port_type] == socket_fd)
-		{
-			return current_session;
-		}
-		else if (current_session->server_socket[port_type] == socket_fd)
+		if (session_socket_cmp(current_session, socket_fd, socket_type, port_type) == TRUE)
 		{
 			return current_session;
 		}
