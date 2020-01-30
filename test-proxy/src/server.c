@@ -26,7 +26,7 @@ static int server_free(struct server* target_server)
 		return SERVER_INVALID;
 	}
 
-	for ( ; i < MAX_SESSION_SOCKETS; ++i)
+	for (i = 0; i < MAX_SESSION_SOCKETS; ++i)
 	{
 		socket_fd = target_server->socket[i]->socket_fd;
 		if (socket_fd != -1)
@@ -197,7 +197,7 @@ int server_remove_from_list(struct vector* server_list, const struct server* tar
 		return SERVER_INVALID;
 	}
 
-	for ( ; i < server_list->size; ++i)
+	for (i = 0; i < server_list->size; ++i)
 	{
 		if (memcmp(target_server, server_list->container[i], sizeof(struct server)) == 0)
 		{

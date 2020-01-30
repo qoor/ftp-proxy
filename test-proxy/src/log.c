@@ -82,7 +82,6 @@ int log_write(const char* message, ...)
 	time = time_buffer.time;
 	local_time = localtime(&time);
 
-	pthread_mutex_lock(&logfile_mutex);
 
 	/* 
 	 * Write log
@@ -104,6 +103,7 @@ int log_write(const char* message, ...)
 	}
 	/* */
 
+	pthread_mutex_lock(&logfile_mutex);
 	/* Argument push to buffer */
 	va_start(args, message);
 	buffer_length = vfprintf(log_file, message, args);
@@ -121,7 +121,6 @@ int log_write(const char* message, ...)
 		fwrite("\n", sizeof(char), 1, log_file);
 	}
 
-	/* */
 	pthread_mutex_unlock(&logfile_mutex);
 
 	return LOG_WRITE_SUCCESS;
@@ -170,7 +169,7 @@ void proxy_error(const char* tagname, const char* format, ...)
 
 	va_start(args, format);
 	vfprintf(stderr, format, args);
-	fprintf(stderr, "\n");
 	va_end(args);
+	fprintf(stderr, "\n");
 }
 
