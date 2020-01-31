@@ -10,6 +10,70 @@
 
 #include "packet.h"
 
+static int server_read_command_packet(struct session* target_session)
+{
+	int received_bytes = 0;
+	int epoll_fd = -1;
+	int socket_fd = -1;
+	static struct epoll_event temp_event = { 0, };
+	static char buffer[COMMAND_BUFFER_SIZE] = { 0, };
+
+	if (target_session == NULL)
+	{
+		return SERVER_INVALID;
+	}
+
+	memset(buffer, 0x00, sizeof(buffer));
+	received_bytes = packet_full_read(socket_fd, buffer, sizeof(buffer));
+	if (received_bytes <= 0)
+	{
+		/* Socket error */
+		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &temp_event);
+		remove_session(target_session);
+		
+		if (received_bytes == 0)
+		{
+			return SERVER_CONNECTION_CLOSED;
+		}
+
+		return SERVER_CONNECTION_ERROR;
+	}
+
+	if (strncmp(buffer, "PORT", 4) == 0 && strlen(buffer) > 4)
+	{
+		/* TODO: Must modify new PORT command packet */
+		buffer[4] = '\0';
+	}
+
+	/* Command received
+	 * TODO: Must implement packet sender function to client 
+	 * send_apcket_to_client(target_session->client_command_socket, buffer, received_bytes);
+	*/
+
+	return SERVER_SUCCESS;
+}
+
+static int server_accept(struct session* target_session)
+{
+	int client_socket = -1;
+	
+	client_socket = accept(proxy_data_socket, (struct sockaddr*)&client_address, (socklen_t*)&client_address_length);
+			/* If connection accept failed */
+	if (client_socket <= 0)
+	{
+		return -1;
+	}
+
+	if (socket_set_nonblock_mode(client_socket) != SOCKET_SUCCESS)
+	{
+		remove_session(target_session);
+		return -1;
+	}
+
+	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &event);
+}
+
+
 /* Listen FTP data port */
 static struct socket* server_listen(struct server* target_server)
 {
@@ -129,6 +193,23 @@ int server_free(struct server* target_server)
 		return SERVER_INVALID;
 	}
 
+	if (target_server->command_socket != NULL)
+	{
+		socket_free(target_server->command_socket);
+		target_server->command_socket = NULL;
+	}
+	if (target_server->data_socket != NULL)
+	{
+		socket_free(target_server->data_socket);
+		target_server->data_socket = NULL;
+	}
+
+	if (target_server->epoll_fd >= 0)
+	{
+		close(target_server->epoll_fd);
+		target_server->epoll_fd = -1;
+	}
+
 	free(target_server);
 
 	return SERVER_SUCCESS;
@@ -150,6 +231,7 @@ int server_polling(struct session* target_session)
 	int epoll_fd = -1;
 	ssize_t received_bytes = 0;
 	struct server* target_server = NULL;
+	int ret = 0;
 
 	if (target_session == NULL)
 	{
@@ -174,47 +256,20 @@ int server_polling(struct session* target_session)
 		client_socket = events[event_id].data.fd;
 		if (client_socket == proxy_command_socket)
 		{
-			received_bytes = packet_full_read(proxy_command_socket, command_buffer, sizeof(command_buffer));
-			if (received_bytes <= 0)
+			ret = server_read_command_packet(target_session);
+			if (ret != SERVER_SUCCESS)
 			{
-				/* Socket error */
-				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, proxy_command_socket, &event);
-				socket_free(target_server->command_socket);
-				target_server->command_socket = NULL;
-				continue;
+				return ret;
 			}
-
-			if (strncmp(command_buffer, "PORT", 4) == 0 && strlen(command_buffer) > 4)
-			{
-				/* TODO: Must modify new PORT command packet */
-				command_buffer[4] = '\0';
-				packet_full_write(proxy_command_socket, command_buffer, 5);
-				continue;
-			}
-
-			/* Command received
-			 * TODO: Must implement packet sender function to client 
-			 * send_apcket_to_client(target_session->client_command_socket, buffer, received_bytes);
-			*/
 		}
 		else if (client_socket == proxy_data_socket)
 		{
 			/* If session request connecting */
-			client_socket = accept(proxy_data_socket, (struct sockaddr*)&client_address, (socklen_t*)&client_address_length);
-			/* If connection accept failed */
-			if (client_socket <= 0)
+			ret = server_accept(target_server, (struct sockaddr*)&client_address, sizeof(struct sockaddr));
+			if (ret <= 0)
 			{
-				continue;
+				return ret;
 			}
-
-			if (socket_set_nonblock_mode(client_socket) != SOCKET_SUCCESS)
-			{
-				shutdown(client_socket, SHUT_RDWR);
-				close(client_socket);
-				continue;
-			}
-
-			epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &event);
 		}
 		else
 		{
@@ -224,8 +279,7 @@ int server_polling(struct session* target_session)
 			{
 				/* Socket error */
 				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_socket, &event);
-				socket_free(target_server->data_socket);
-				target_server->data_socket = NULL;
+				remove_session(target_session);
 				continue;
 			}
 			/* Command received

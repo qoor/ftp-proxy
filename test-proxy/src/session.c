@@ -72,13 +72,8 @@ int add_session_to_list(struct list* session_list, int socket_fd, int socket_typ
 	return SESSION_ADD_SUCCESS;
 }
 
-int remove_session_from_list(struct list* session_list, struct session* target_session)
+int remove_session(struct session* target_session)
 {
-	if (session_list == NULL)
-	{
-		return SESSION_INVALID_LIST;
-	}
-
 	if (target_session == NULL)
 	{
 		return SESSION_INVALID_SESSION;

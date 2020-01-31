@@ -35,7 +35,7 @@ struct session
 };
 
 int add_session_to_list(struct list* session_list, int socket_fd, int socket_type, int port_type);
-int remove_session_from_list(struct list* session_list, struct session* target_session);
+int remove_session(struct session* target_session);
 
 struct session* get_session_from_list(const struct list* session_list, int socket_fd, int socket_type, int port_type);
 
