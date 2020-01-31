@@ -8,68 +8,64 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-static int server_free(struct server* target_server)
+/* Listen FTP data port */
+static struct socket* server_listen(struct server* target_server)
 {
+	struct sockaddr_in bind_address = { 0, };
+	struct socket* new_socket = NULL;
+	struct epoll_event event = { 0, };
+	int ret = 0;
+
+	event.events = EPOLLIN;
+
 	if (target_server == NULL)
-	{
-		return SERVER_INVALID;
-	}
-	free(target_server);
-
-	return SERVER_SUCCESS;
-}
-
-static struct server* server_create()
-{
-	struct server* new_server = NULL;
-
-	new_server = (struct server*)malloc(sizeof(struct server));
-	if (new_server == NULL)
 	{
 		return NULL;
 	}
 
-	return new_server;
+	bind_address.sin_addr.s_addr = htonl(INADDR_ANY);
+	bind_address.sin_family = AF_INET;
+	bind_address.sin_port = htons(0); /* Port 0 is ANY */
+	new_socket = socket_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, DATA_BUFFER_SIZE, &bind_address);
+	if (new_socket == NULL)
+	{
+		return NULL;
+	}
+
+	ret = socket_listen(new_socket, 0);
+	if (ret < 0)
+	{
+		socket_free(new_socket);
+		return NULL;
+	}
+
+	ret = epoll_ctl(target_server->epoll_fd, EPOLL_CTL_ADD, new_socket->fd, &event);
+	if (ret < 0)
+	{
+		socket_free(new_socket);
+		return NULL;
+	}
+
+	target_server->data_socket = new_socket;
+
+	return new_socket;
 }
 
-static int session_listen(struct socket* socket, uint16_t port)
+/* Connect to FTP server command port */
+static struct socket* server_connect(struct server* target_server)
 {
-	struct sockaddr_in bind_socket = { 0, };
-	int ret = 0;
-	int socket_fd = -1;
-
-	if (socket == NULL)
-	{
-		return SERVER_INVALID;
-	}
-
-	socket_fd = socket->socket_fd;
-
-	bind_socket.sin_addr.s_addr = htonl(INADDR_ANY);
-	bind_socket.sin_family = AF_INET;
-	bind_socket.sin_port = htons(port);
-	ret = bind(socket_fd, (struct sockaddr*)&bind_socket, sizeof(struct sockaddr));
-	if (ret == -1)
-	{
-		return SERVER_SOCKET_CREATE_FAILED;
-	}
-
-	ret = listen(socket_fd, SOMAXCONN);
-	if (ret == -1)
-	{
-		return SERVER_SOCKET_CREATE_FAILED;
-	}
-
-	return SERVER_SUCCESS;
-}
-
-/* Connect to server and insert connection socket to session */
-static struct socket* server_connect(struct session* session, const struct server* server)
-{
-	int ret = 0;
 	struct socket* new_socket = NULL;
+	struct epoll_event event = { 0, };
+	int ret = 0;
 
-	new_socket = socket_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, COMMAND_BUFFER_SIZE, &server->socket_address);
+	event.events = EPOLLIN;
+
+	if (target_server == NULL)
+	{
+		return NULL;
+	}
+
+	new_socket = socket_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, COMMAND_BUFFER_SIZE, &target_server->address);
 	if (new_socket == NULL)
 	{
 		return NULL;
@@ -81,59 +77,82 @@ static struct socket* server_connect(struct session* session, const struct serve
 		socket_free(new_socket);
 		return NULL;
 	}
+	
+	ret = epoll_ctl(target_server->epoll_fd, EPOLL_CTL_ADD, new_socket->fd, &event);
+	if (ret < 0)
+	{
+		socket_free(new_socket);
+		return NULL;
+	}
 
-	session->server_command_socket = new_socket;
+	target_server->command_socket = new_socket;
 
 	return new_socket;
 }
 
-int server_remove_from_list(struct server* target_server)
+struct server* server_create_and_insert(struct session* session, const struct sockaddr_in* address)
+{
+	struct server* new_server = NULL;
+
+	new_server = (struct server*)malloc(sizeof(struct server));
+	if (new_server == NULL)
+	{
+		return NULL;
+	}
+
+	new_server->address.sin_addr = address->sin_addr;
+	new_server->address.sin_port = address->sin_port;
+	new_server->address.sin_family = AF_INET;
+
+	new_server->command_socket = NULL;
+	new_server->data_socket = NULL;
+	new_server->epoll_fd = -1;
+
+	session->server = new_server;
+
+	return new_server;
+}
+
+int server_free(struct server* target_server)
 {
 	if (target_server == NULL)
 	{
 		return SERVER_INVALID;
 	}
 
-	LIST_DEL(target_server->list);	
+	free(target_server);
 
 	return SERVER_SUCCESS;
 }
 
-int server_register_servers_to_epoll(struct list* session_list, int target_epoll_fd)
+int server_polling(struct session* target_session)
 {
-	struct socket* server_socket = NULL;
-	struct epoll_event event = { 0, };
-
-	event.events = EPOLLIN;
-
-	if (session_list == NULL || target_epoll_fd == -1)
-	{
-		return SERVER_INVALID;
-	}
-
-	list_for_each_entry(server_socket, session_list, list)
-	{
-		epoll_ctl(target_epoll_fd, EPOLL_CTL_ADD, server_socket->socket_fd, &event);	
-	}
-
-	return SERVER_SUCCESS;
-}
-
-int server_polling(int epoll_fd, const struct list* session_list)
-{
-	int active_event_count = 0;
 	static struct epoll_event events[MAX_EVENTS] = { { 0, }, };
+	static char buffer[DATA_BUFFER_SIZE];
+	static struct epoll_event event = { 0, };
+	int active_event_count = 0;
 	int event_id = 0;
-	int server_socket = -1;
+	int proxy_command_socket = -1;
+	int proxy_data_socket = -1;
 	int client_socket = -1;
 	struct sockaddr_in client_address = { 0, };
 	const size_t client_address_length = sizeof(struct sockaddr);
+	int epoll_fd = -1;
+	ssize_t received_bytes = 0;
+	struct server* target_server = NULL;
 
-	if (epoll_fd == -1)
+	if (target_session == NULL)
 	{
 		return SERVER_INVALID;
 	}
 
+	memset(&event, 0x00, sizeof(struct epoll_event));
+
+	target_server = target_session->server;
+	proxy_command_socket = target_server->command_socket->fd;
+	proxy_data_socket = target_server->data_socket->fd;
+
+	epoll_fd = target_server->epoll_fd;
 	active_event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, EVENT_TIMEOUT);
 	if (active_event_count == -1)
 	{
@@ -143,15 +162,44 @@ int server_polling(int epoll_fd, const struct list* session_list)
 	for (event_id = 0; event_id < active_event_count; ++event_id)
 	{
 		client_socket = events[event_id].data.fd;
-		if (client_socket == server_socket)
+		if (client_socket == proxy_command_socket)
+		{
+			received_bytes = recv(client_socket, buffer, sizeof(buffer), 0);
+			if (received_bytes < 0)
+			{
+				/* Socket error */
+				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_socket, &event);
+				socket_free(target_server->command_socket);
+				continue;
+			}
+
+			/* TODO: Must implement packet sender function to client */
+			/* send_packet_to_client(target_session->client_command_socket, buffer, received_bytes); */
+		}
+		else if (client_socket == proxy_data_socket)
 		{
 			/* If session request connecting */
-			client_socket = accept(server_socket, (struct sockaddr*)&client_address, (socklen_t*)&client_address_length);
+			client_socket = accept(proxy_data_socket, (struct sockaddr*)&client_address, (socklen_t*)&client_address_length);
+			/* If connection accept failed */
+			if (client_socket < 0)
+			{
+				continue;
+			}
+
+			if (socket_set_nonblock_mode(client_socket) != SOCKET_SUCCESS)
+			{
+				shutdown(client_socket, SHUT_RDWR);
+				close(client_socket);
+				continue;
+			}
+
+			epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &event);
 		}
 		else
 		{
-			
+			/* Connection of FTP server data socket */
 		}
+
 	}
 
 	return SERVER_SUCCESS;

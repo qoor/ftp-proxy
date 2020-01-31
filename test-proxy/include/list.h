@@ -19,8 +19,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _COMMON_MINI_CLIST_H
-#define _COMMON_MINI_CLIST_H
+#ifndef PROXY_INCLUDE_LIST_H_
+#define PROXY_INCLUDE_LIST_H_
 
 /* these are circular or bidirectionnal lists only. Each list pointer points to
  * another list pointer in a structure, and not the structure itself. The
@@ -31,16 +31,6 @@ struct list {
     struct list *n;	/* next */
     struct list *p;	/* prev */
 };
-
-/* This is similar to struct list, but we want to be sure the compiler will
- * yell at you if you use macroes for one when you're using the other. You have
- * to expicitely cast if that's really what you want to do.
- */
-struct mt_list {
-    struct mt_list *next;
-    struct mt_list *prev;
-};
-
 
 /* a back-ref is a pointer to a target list entry. It is used to detect when an
  * element being deleted is currently being tracked by another user. The best
@@ -88,6 +78,8 @@ struct cond_wordlist {
 
 #define LIST_HEAD_INIT(l) { &l, &l }
 
+#define __LIST_STRUCT_PTR_TYPE struct list*
+
 /* adds an element at the beginning of a list ; returns the element */
 #define LIST_ADD(lh, el) ({ (el)->n = (lh)->n; (el)->n->p = (lh)->n = (el); (el)->p = (lh); (el); })
 
@@ -106,8 +98,8 @@ struct cond_wordlist {
  * <old->prev> at the end of another list <new>. The old list DOES NOT have
  * any head here.
  */
-#define LIST_SPLICE_END_DETACHED(new, old) do {              \
-		typeof(new) __t;                             \
+#define LIST_SPLICE_END_DETACHED(new, old, type) do {              \
+		type __t;                             \
 		(new)->p->n = (old);                         \
 		(old)->p->n = (new);                         \
 		__t = (old)->p;                              \
@@ -116,15 +108,20 @@ struct cond_wordlist {
 	} while (0)
 
 /* removes an element from a list and returns it */
-#define LIST_DEL(el) ({ typeof(el) __ret = (el); (el)->n->p = (el)->p; (el)->p->n = (el)->n; (__ret); })
+#define LIST_DEL(el) ({ \
+	__LIST_STRUCT_PTR_TYPE __ret = (el); \
+	(el)->n->p = (el)->p; \
+	(el)->p->n = (el)->n; \
+	(__ret); \
+})
 
 /* removes an element from a list, initializes it and returns it.
  * This is faster than LIST_DEL+LIST_INIT as we avoid reloading the pointers.
  */
-#define LIST_DEL_INIT(el) ({ \
-	typeof(el) __ret = (el);                        \
-	typeof(__ret->n) __n = __ret->n;                \
-	typeof(__ret->p) __p = __ret->p;                \
+#define LIST_DEL_INIT(el, type) ({ \
+	__LIST_STRUCT_PTR_TYPE __ret = (el);                        \
+	__LIST_STRUCT_PTR_TYPE __n = __ret->n;                \
+	__LIST_STRUCT_PTR_TYPE __p = __ret->p;                \
 	__n->p = __p; __p->n = __n;                     \
 	__ret->n = __ret->p = __ret;                    \
 	__ret;                                          \
@@ -168,10 +165,10 @@ struct cond_wordlist {
  * that <item> must not be modified during the loop.
  * Example: list_for_each_entry(cur_acl, known_acl, list) { ... };
  */ 
-#define list_for_each_entry(item, list_head, member)                      \
-	for (item = LIST_ELEM((list_head)->n, typeof(item), member);     \
+#define list_for_each_entry(item, list_head, member, type)                      \
+	for (item = LIST_ELEM((list_head)->n, type, member);     \
 	     &item->member != (list_head);                                \
-	     item = LIST_ELEM(item->member.n, typeof(item), member))
+	     item = LIST_ELEM(item->member.n, type, member))
 
 /*
  * Same as list_for_each_entry but starting from current point
@@ -179,9 +176,9 @@ struct cond_wordlist {
  * It's basically the same macro but without initializing item to the head of
  * the list.
  */
-#define list_for_each_entry_from(item, list_head, member) \
+#define list_for_each_entry_from(item, list_head, member, type) \
 	for ( ; &item->member != (list_head); \
-	     item = LIST_ELEM(item->member.n, typeof(item), member))
+	     item = LIST_ELEM(item->member.n, type, member))
 
 /*
  * Simpler FOREACH_ITEM_SAFE macro inspired from Linux sources.
@@ -191,11 +188,11 @@ struct cond_wordlist {
  * as <item> is needed so that <item> may safely be deleted if needed.
  * Example: list_for_each_entry_safe(cur_acl, tmp, known_acl, list) { ... };
  */ 
-#define list_for_each_entry_safe(item, back, list_head, member)           \
-	for (item = LIST_ELEM((list_head)->n, typeof(item), member),     \
-	     back = LIST_ELEM(item->member.n, typeof(item), member);     \
+#define list_for_each_entry_safe(item, back, list_head, member, type)           \
+	for (item = LIST_ELEM((list_head)->n, type, member),     \
+	     back = LIST_ELEM(item->member.n, type, member);     \
 	     &item->member != (list_head);                                \
-	     item = back, back = LIST_ELEM(back->member.n, typeof(back), member))
+	     item = back, back = LIST_ELEM(back->member.n, type, member))
 
 
 /*
@@ -204,8 +201,10 @@ struct cond_wordlist {
  * It's basically the same macro but without initializing item to the head of
  * the list.
  */
-#define list_for_each_entry_safe_from(item, back, list_head, member) \
-	for (back = LIST_ELEM(item->member.n, typeof(item), member);     \
+#define list_for_each_entry_safe_from(item, back, list_head, member, type) \
+	for (back = LIST_ELEM(item->member.n, type, member);     \
 	     &item->member != (list_head);                                \
-	     item = back, back = LIST_ELEM(back->member.n, typeof(back), member))
+	     item = back, back = LIST_ELEM(back->member.n, type, member))
+
+#endif
 

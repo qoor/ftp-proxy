@@ -45,8 +45,8 @@ struct socket* socket_create(int domain, int type, int protocol, size_t buffer_s
 
 	new_socket->buffer_size = buffer_size;
 
-	new_socket->socket_fd = socket(domain, type, protocol);
-	if (new_socket->socket_fd < 0)
+	new_socket->fd = socket(domain, type, protocol);
+	if (new_socket->fd < 0)
 	{
 		socket_free(new_socket);
 		errno = SOCKET_OPEN_SOCKET_FAILED;
@@ -73,33 +73,33 @@ int socket_free(struct socket* target_socket)
 		target_socket->buffer = NULL;
 	}
 
-	if (target_socket->socket_fd >= 0)
+	if (target_socket->fd >= 0)
 	{
-		shutdown(target_socket->socket_fd, SHUT_RDWR);
-		close(target_socket->socket_fd);
+		shutdown(target_socket->fd, SHUT_RDWR);
+		close(target_socket->fd);
 		free(target_socket);
 	}
 
 	return SOCKET_SUCCESS;
 }
 
-int socket_set_nonblock_mode(struct socket* target_socket)
+int socket_set_nonblock_mode(int socket_fd)
 {
 	int flags = 0;
 	int ret = 0;
 
-	if (target_socket == NULL)
+	if (socket_fd == -1)
 	{
 		return SOCKET_INVALID;
 	}
 
-	flags = fcntl(target_socket->socket_fd, F_GETFL);
+	flags = fcntl(socket_fd, F_GETFL);
 	if (flags < 0)
 	{
 		return SOCKET_FLAG_CONTROL_FAILED;
 	}
 
-	ret = fcntl(target_socket->socket_fd, F_SETFL, flags | O_NONBLOCK);
+	ret = fcntl(socket_fd, F_SETFL, flags | O_NONBLOCK);
 	if (ret < 0)
 	{
 		return SOCKET_FLAG_CONTROL_FAILED;
@@ -117,10 +117,33 @@ int socket_connect(struct socket* target_socket)
 		return SOCKET_INVALID;
 	}
 
-	ret = connect(target_socket->socket_fd, (struct sockaddr*)&target_socket->address, sizeof(struct sockaddr));
+	ret = connect(target_socket->fd, (struct sockaddr*)&target_socket->address, sizeof(struct sockaddr));
 	if ((ret < 0) && (errno != EINPROGRESS))
 	{
-		return SOCKET_CONNECT_FAILD;
+		return SOCKET_READY_FAILED;
+	}
+
+	return SOCKET_SUCCESS;
+}
+
+int socket_listen(struct socket* target_socket, int backlog)
+{
+	int ret = 0;
+
+	if (target_socket == NULL)
+	{
+		return SOCKET_INVALID;
+	}
+
+	if (backlog < 0)
+	{
+		backlog = 0;
+	}
+
+	ret = listen(target_socket->fd, backlog);
+	if (ret < 0)
+	{
+		return SOCKET_READY_FAILED;
 	}
 
 	return SOCKET_SUCCESS;

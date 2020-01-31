@@ -5,6 +5,7 @@
 #include <errno.h>
 
 #include "types.h"
+#include "server.h"
 
 static int session_socket_cmp(const struct session* source_session, int socket_fd, int socket_type, int port_type)
 {
@@ -14,22 +15,22 @@ static int session_socket_cmp(const struct session* source_session, int socket_f
 	{
 		if (port_type == PORT_TYPE_COMMAND)
 		{
-			source_socket_fd = source_session->client_command_socket->socket_fd;
+			source_socket_fd = source_session->client_command_socket->fd;
 		}
 		else
 		{
-			source_socket_fd = source_session->client_data_socket->socket_fd;
+			source_socket_fd = source_session->client_data_socket->fd;
 		}
 	}
 	else
 	{
 		if (port_type == PORT_TYPE_COMMAND)
 		{
-			source_socket_fd = source_session->server_command_socket->socket_fd;
+			source_socket_fd = source_session->server->command_socket->fd;
 		}
 		else
 		{
-			source_socket_fd = source_session->server_data_socket->socket_fd;
+			source_socket_fd = source_session->server->data_socket->fd;
 		}
 	}
 
@@ -64,10 +65,9 @@ int add_session_to_list(struct list* session_list, int socket_fd, int socket_typ
 
 	new_session->client_command_socket = NULL;
 	new_session->client_data_socket = NULL;
-	new_session->server_command_socket = NULL;
-	new_session->server_data_socket = NULL;
+	new_session->server = NULL;
 
-	LIST_ADD(session_list, new_session->list);
+	LIST_ADD(session_list, &new_session->list);
 
 	return SESSION_ADD_SUCCESS;
 }
@@ -86,9 +86,22 @@ int remove_session_from_list(struct list* session_list, struct session* target_s
 
 	if (target_session->client_command_socket != NULL)
 	{
-		socket_
+		socket_free(target_session->client_command_socket);
+		target_session->client_command_socket = NULL;
+	}
+	if (target_session->client_data_socket != NULL)
+	{
+		socket_free(target_session->client_data_socket);
+		target_session->client_data_socket = NULL;
+	}
 
-	LIST_DEL(target_session->list);
+	if (target_session->server != NULL)
+	{
+		server_free(target_session->server);
+		target_session->server = NULL;
+	}
+
+	LIST_DEL(&target_session->list);
 
 	return SESSION_INVALID_SESSION;
 }
@@ -96,7 +109,6 @@ int remove_session_from_list(struct list* session_list, struct session* target_s
 struct session* get_session_from_list(const struct list* session_list, int socket_fd, int socket_type, int port_type)
 {
 	struct session* current_session = NULL;
-	int i = 0;
 
 	errno = 0;
 
@@ -124,7 +136,7 @@ struct session* get_session_from_list(const struct list* session_list, int socke
 		return NULL;
 	}
 
-	list_for_each_entry(current_session, session_list, list)
+	list_for_each_entry(current_session, session_list, list, struct session*)
 	{
 		if (session_socket_cmp(current_session, socket_fd, socket_type, port_type) == TRUE)
 		{

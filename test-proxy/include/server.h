@@ -18,8 +18,10 @@
 /* Server info structure */
 struct server
 {
-	struct sockaddr_in socket_address;
-	struct list list;
+	struct sockaddr_in address;
+	struct socket* command_socket;
+	struct socket* data_socket;
+	int epoll_fd;
 };
 /* */
 
@@ -36,9 +38,9 @@ enum server_error_type
 };
 /* */
 
-int server_remove_from_list(struct server* target_server);
-int server_register_servers_to_epoll(struct list* session_list, int target_epoll_fd);
-int server_polling(int epoll_fd, const struct list* session_list);
+struct server* server_create(const struct sockaddr_in* address);
+int server_free(struct server* target_server);
+int server_polling(struct session* target_session);
 
 #endif
 

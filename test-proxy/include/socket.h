@@ -14,12 +14,12 @@ enum socket_error_type
 	SOCKET_ALLOC_FAILED,
 	SOCKET_OPEN_SOCKET_FAILED,
 	SOCKET_FLAG_CONTROL_FAILED,
-	SOCKET_CONNECT_FAILD
+	SOCKET_READY_FAILED
 };
 
 struct socket
 {
-	int socket_fd;
+	int fd;
 	char* buffer;
 	size_t buffer_size;
 	struct sockaddr_in address;
@@ -27,8 +27,9 @@ struct socket
 
 struct socket* socket_create(int domain, int type, int protocol, size_t buffer_size, const struct sockaddr_in* address);
 int socket_free(struct socket* target_socket);
-int socket_set_nonblock_mode(struct socket* target_socket);
+int socket_set_nonblock_mode(int socket_fd);
 int socket_connect(struct socket* target_socket);
+int socket_listen(struct socket* target_socket, int backlog);
 
 #endif
 

@@ -30,8 +30,7 @@ struct session
 {
 	struct socket* client_command_socket;
 	struct socket* client_data_socket;
-	struct socket* server_command_socket;
-	struct socket* server_data_socket;
+	struct server* server;
 	struct list list;
 };
 
