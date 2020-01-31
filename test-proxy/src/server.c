@@ -178,19 +178,24 @@ int server_polling(struct session* target_session)
 			if (received_bytes <= 0)
 			{
 				/* Socket error */
-				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_socket, &event);
+				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, proxy_command_socket, &event);
 				socket_free(target_server->command_socket);
+				target_server->command_socket = NULL;
 				continue;
 			}
 
-			/* TODO: Must implement packet sender function to client */
-			/* send_packet_to_client(target_session->client_command_socket, buffer, received_bytes); */
 			if (strncmp(command_buffer, "PORT", 4) == 0 && strlen(command_buffer) > 4)
 			{
 				/* TODO: Must modify new PORT command packet */
 				command_buffer[4] = '\0';
 				packet_full_write(proxy_command_socket, command_buffer, 5);
+				continue;
 			}
+
+			/* Command received
+			 * TODO: Must implement packet sender function to client 
+			 * send_apcket_to_client(target_session->client_command_socket, buffer, received_bytes);
+			*/
 		}
 		else if (client_socket == proxy_data_socket)
 		{
@@ -214,8 +219,20 @@ int server_polling(struct session* target_session)
 		else
 		{
 			/* Connection of FTP server data socket */
+			received_bytes = packet_full_read(client_socket, data_buffer, sizeof(data_buffer));
+			if (received_bytes <= 0)
+			{
+				/* Socket error */
+				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_socket, &event);
+				socket_free(target_server->data_socket);
+				target_server->data_socket = NULL;
+				continue;
+			}
+			/* Command received
+			 * TODO: Must implement packet sender function to client 
+			 * send_apcket_to_client(target_session->client_command_socket, buffer, received_bytes);
+			*/
 		}
-
 	}
 
 	return SERVER_SUCCESS;
