@@ -10,33 +10,23 @@
 
 #include "packet.h"
 
-static int server_read_command_packet(struct session* target_session)
+static void server_close_client_socket(int epoll_fd, int target_socket)
 {
-	int received_bytes = 0;
-	int epoll_fd = -1;
-	int socket_fd = -1;
-	static struct epoll_event temp_event = { 0, };
-	static char buffer[COMMAND_BUFFER_SIZE] = { 0, };
+	static struct epoll_event event = { 0, };
 
+	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, target_socket, &event);
+}
+
+static int server_command_received(struct session* target_session, char* buffer, int received_bytes)
+{
 	if (target_session == NULL)
 	{
 		return SERVER_INVALID;
 	}
 
-	memset(buffer, 0x00, sizeof(buffer));
-	received_bytes = packet_full_read(socket_fd, buffer, sizeof(buffer));
-	if (received_bytes <= 0)
+	if (buffer == NULL)
 	{
-		/* Socket error */
-		epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &temp_event);
-		remove_session(target_session);
-		
-		if (received_bytes == 0)
-		{
-			return SERVER_CONNECTION_CLOSED;
-		}
-
-		return SERVER_CONNECTION_ERROR;
+		return SERVER_INVALID_PARAM;
 	}
 
 	if (strncmp(buffer, "PORT", 4) == 0 && strlen(buffer) > 4)
@@ -47,17 +37,96 @@ static int server_read_command_packet(struct session* target_session)
 
 	/* Command received
 	 * TODO: Must implement packet sender function to client 
-	 * send_apcket_to_client(target_session->client_command_socket, buffer, received_bytes);
+	 * send_packet_to_client(target_session->client_command_socket, buffer, received_bytes);
 	*/
 
 	return SERVER_SUCCESS;
 }
 
-static int server_accept(struct session* target_session)
+static int server_data_received(struct session* target_session, char* buffer, int received_bytes)
+{
+	if (target_session == NULL)
+	{
+		return SERVER_INVALID;
+	}
+
+	if (buffer == NULL)
+	{
+		return SERVER_INVALID_PARAM;
+	}
+
+	/* File transfer data received
+	 * TODO: Must implement packet sender function to client
+	 * send_packet_to_client(target_session->client_data_socket, buffer, received_bytes);
+	*/
+
+	return SERVER_SUCCESS;
+}
+
+static int server_read_packet(struct session* target_session, int port_type)
+{
+	int received_bytes = 0;
+	int socket_fd = -1;
+	static char buffer[COMMAND_BUFFER_SIZE] = { 0, };
+
+	if (target_session == NULL)
+	{
+		return SERVER_INVALID;
+	}
+
+	if (port_type == PORT_TYPE_COMMAND)
+	{
+		socket_fd = target_session->server->command_socket->fd;
+	}
+	else if (port_type == PORT_TYPE_DATA)
+	{
+		socket_fd = target_session->server->data_socket->fd;
+	}
+	else
+	{
+		return SERVER_INVALID_PARAM;
+	}
+
+	memset(buffer, 0x00, sizeof(buffer));
+	received_bytes = packet_full_read(socket_fd, buffer, sizeof(buffer));
+	if (received_bytes <= 0)
+	{
+		/* Socket error */
+		if (received_bytes == 0)
+		{
+			/* If connection closed result is not error */
+			return SERVER_CONNECTION_CLOSED;
+		}
+
+		return SERVER_CONNECTION_ERROR;
+	}
+
+	if (port_type == PORT_TYPE_COMMAND)
+	{
+		server_command_received(target_session, buffer, received_bytes);
+	}
+	else
+	{
+		server_data_received(target_session, buffer, received_bytes);
+	}
+
+	return SERVER_SUCCESS;
+}
+
+/* Accept connection from FTP server to proxy data port
+ * This function return value of  socket file descriptor */
+static int server_accept(struct server* target_server, struct sockaddr_in* client_address)
 {
 	int client_socket = -1;
+	static unsigned int client_address_length = sizeof(struct sockaddr);
+	static struct epoll_event event = { 0, };
+
+	if (target_server == NULL || client_address == NULL)
+	{
+		return -1;
+	}
 	
-	client_socket = accept(proxy_data_socket, (struct sockaddr*)&client_address, (socklen_t*)&client_address_length);
+	client_socket = accept(target_server->data_socket->fd, (struct sockaddr*)client_address, &client_address_length);
 			/* If connection accept failed */
 	if (client_socket <= 0)
 	{
@@ -66,13 +135,14 @@ static int server_accept(struct session* target_session)
 
 	if (socket_set_nonblock_mode(client_socket) != SOCKET_SUCCESS)
 	{
-		remove_session(target_session);
 		return -1;
 	}
 
-	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, client_socket, &event);
+	event.events = EPOLLIN;
+	epoll_ctl(target_server->epoll_fd, EPOLL_CTL_ADD, client_socket, &event);
+	
+	return client_socket;
 }
-
 
 /* Listen FTP data port */
 static struct socket* server_listen(struct server* target_server)
@@ -218,18 +288,13 @@ int server_free(struct server* target_server)
 int server_polling(struct session* target_session)
 {
 	static struct epoll_event events[MAX_EVENTS] = { { 0, }, };
-	static char command_buffer[COMMAND_BUFFER_SIZE];
-	static char data_buffer[DATA_BUFFER_SIZE];
-	static struct epoll_event event = { 0, };
 	int active_event_count = 0;
 	int event_id = 0;
 	int proxy_command_socket = -1;
 	int proxy_data_socket = -1;
 	int client_socket = -1;
 	struct sockaddr_in client_address = { 0, };
-	const size_t client_address_length = sizeof(struct sockaddr);
 	int epoll_fd = -1;
-	ssize_t received_bytes = 0;
 	struct server* target_server = NULL;
 	int ret = 0;
 
@@ -238,13 +303,11 @@ int server_polling(struct session* target_session)
 		return SERVER_INVALID;
 	}
 
-	memset(&event, 0x00, sizeof(struct epoll_event));
-
 	target_server = target_session->server;
 	proxy_command_socket = target_server->command_socket->fd;
 	proxy_data_socket = target_server->data_socket->fd;
-
 	epoll_fd = target_server->epoll_fd;
+
 	active_event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, EVENT_TIMEOUT);
 	if (active_event_count == -1)
 	{
@@ -256,36 +319,35 @@ int server_polling(struct session* target_session)
 		client_socket = events[event_id].data.fd;
 		if (client_socket == proxy_command_socket)
 		{
-			ret = server_read_command_packet(target_session);
+			ret = server_read_packet(target_session, PORT_TYPE_COMMAND);
 			if (ret != SERVER_SUCCESS)
 			{
+				server_close_client_socket(epoll_fd, proxy_command_socket);
+				remove_session(target_session);
+
 				return ret;
 			}
 		}
 		else if (client_socket == proxy_data_socket)
 		{
-			/* If session request connecting */
-			ret = server_accept(target_server, (struct sockaddr*)&client_address, sizeof(struct sockaddr));
+			/* If FTP server request connect to proxy data socket */
+			ret = server_accept(target_server, &client_address);
 			if (ret <= 0)
 			{
-				return ret;
+				continue;
 			}
 		}
 		else
 		{
 			/* Connection of FTP server data socket */
-			received_bytes = packet_full_read(client_socket, data_buffer, sizeof(data_buffer));
-			if (received_bytes <= 0)
+			ret = server_read_packet(target_session, PORT_TYPE_DATA);
+			if (ret != SERVER_SUCCESS)
 			{
-				/* Socket error */
-				epoll_ctl(epoll_fd, EPOLL_CTL_DEL, client_socket, &event);
+				server_close_client_socket(epoll_fd, client_socket);
 				remove_session(target_session);
-				continue;
+				
+				return ret;
 			}
-			/* Command received
-			 * TODO: Must implement packet sender function to client 
-			 * send_apcket_to_client(target_session->client_command_socket, buffer, received_bytes);
-			*/
 		}
 	}
 
