@@ -43,7 +43,9 @@ enum server_error_type
 
 struct server* server_create(const struct sockaddr_in* address);
 int server_free(struct server* target_server);
-int server_polling(struct session* target_session);
+int server_loop(struct list* session_list);
+int server_session_polling(struct session* target_session);
+int send_packet_to_server(struct server* target_server, char* buffer, int received_bytes, int port_type);
 
 #endif
 
