@@ -9,6 +9,8 @@
 #include <unistd.h>
 
 #include "packet.h"
+#include "utils.h"
+#include "types.h"
 
 static void server_close_client_socket(int epoll_fd, int target_socket)
 {
@@ -281,13 +283,15 @@ int server_free(struct server* target_server)
 
 int server_loop(struct list* session_list)
 {
+	struct session* current_session = NULL;
+	struct session* temp_session = NULL;
+
 	if (session_list == NULL)
 	{
 		return SERVER_INVALID;
 	}
 
-	struct session* current_session = NULL;
-	list_for_each_entry(current_session, session_list, list, struct session*)
+	list_for_each_entry_safe(current_session, temp_session, session_list, list, struct session*)
 	{
 		server_session_polling(current_session);
 	}
@@ -396,11 +400,17 @@ int send_packet_to_server(struct server* target_server, char* buffer, int receiv
 	if (strncmp(buffer, "PORT", 4) == 0 && strlen(buffer) > 4)
 	{
 		/* TODO: Must modify new PORT command packet */
-		buffer[4] = '\0';
-		new_buffer_size = 5;
+		if (is_port_command(buffer, received_bytes) == FALSE)
+		{
+			new_buffer_size = generate_port_command(socket_fd, buffer);
+		}
 	}
 
-	packet_full_write(socket_fd, buffer, new_buffer_size);
+	if (new_buffer_size > 0)
+	{
+		packet_full_write(socket_fd, buffer, new_buffer_size);
+	}
+
 	return SERVER_SUCCESS;
 }
 

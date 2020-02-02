@@ -32,7 +32,6 @@ enum get_argument_error_type
 int get_options(struct option* dest, int argc, const char** argv);
 int get_option_from_argument(struct option* dest, int argc, const char** argv);
 int get_option_from_file(struct option* dest);
-void skip_whitespace(char** data);
 
 int create_option_file(void);
 void add_server_to_option(struct option* dest, const char* connection_string);

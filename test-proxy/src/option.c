@@ -150,20 +150,6 @@ int get_option_from_file(struct option* dest)
 	return ret;
 }
 
-/* Skipping whitespace of C string pointer */
-void skip_whitespace(char** data)
-{
-	if (data == NULL || *data == NULL)
-	{
-		return;
-	}
-
-	while (**data != '\0' && (**data == '\t' || **data == ' '))
-	{
-		++(*data);
-	}
-}
-
 /* Compare target string as same as original key? */
 int keycmp(const char* target, const char* original_key)
 {
