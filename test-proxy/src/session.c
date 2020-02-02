@@ -15,11 +15,11 @@ static int session_socket_cmp(const struct session* source_session, int socket_f
 	{
 		if (port_type == PORT_TYPE_COMMAND)
 		{
-			source_socket_fd = source_session->client_command_socket->fd;
+			source_socket_fd = source_session->client->command_socket->fd;
 		}
 		else
 		{
-			source_socket_fd = source_session->client_data_socket->fd;
+			source_socket_fd = source_session->client->data_socket->fd;
 		}
 	}
 	else
@@ -63,8 +63,8 @@ int add_session_to_list(struct list* session_list, int socket_fd, int socket_typ
 		return SESSION_ALLOC_FAILED;
 	}
 
-	new_session->client_command_socket = NULL;
-	new_session->client_data_socket = NULL;
+	new_session->client->command_socket = NULL;
+	new_session->client->data_socket = NULL;
 	new_session->server = NULL;
 
 	LIST_ADD(session_list, &new_session->list);
@@ -79,15 +79,15 @@ int remove_session(struct session* target_session)
 		return SESSION_INVALID_SESSION;
 	}
 
-	if (target_session->client_command_socket != NULL)
+	if (target_session->client->command_socket != NULL)
 	{
-		socket_free(target_session->client_command_socket);
-		target_session->client_command_socket = NULL;
+		socket_free(target_session->client->command_socket);
+		target_session->client->command_socket = NULL;
 	}
-	if (target_session->client_data_socket != NULL)
+	if (target_session->client->data_socket != NULL)
 	{
-		socket_free(target_session->client_data_socket);
-		target_session->client_data_socket = NULL;
+		socket_free(target_session->client->data_socket);
+		target_session->client->data_socket = NULL;
 	}
 
 	if (target_session->server != NULL)
