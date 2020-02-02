@@ -28,8 +28,7 @@ enum session_error_type
 
 struct session
 {
-	struct socket* client_command_socket;
-	struct socket* client_data_socket;
+	struct client* client;
 	struct server* server;
 	struct list list;
 };
