@@ -53,5 +53,10 @@
   "directory": "/home/mabling/develop/test-proxy/test-proxy",
   "command": "/usr/bin/cc  -I/home/mabling/develop/test-proxy/test-proxy/include   -std=c90 -Wall -g   -o CMakeFiles/test-proxy.dir/src/packet.c.o   -c /home/mabling/develop/test-proxy/test-proxy/src/packet.c",
   "file": "/home/mabling/develop/test-proxy/test-proxy/src/packet.c"
+},
+{
+  "directory": "/home/mabling/develop/test-proxy/test-proxy",
+  "command": "/usr/bin/cc  -I/home/mabling/develop/test-proxy/test-proxy/include   -std=c90 -Wall -g   -o CMakeFiles/test-proxy.dir/src/utils.c.o   -c /home/mabling/develop/test-proxy/test-proxy/src/utils.c",
+  "file": "/home/mabling/develop/test-proxy/test-proxy/src/utils.c"
 }
 ]
