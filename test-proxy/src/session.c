@@ -3,38 +3,108 @@
 #include <malloc.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/epoll.h>
 
 #include "types.h"
+#include "client.h"
 #include "server.h"
 
-static int session_socket_cmp(const struct session* source_session, int socket_fd, int socket_type, int port_type)
+static int socket_del_from_epoll(int epoll_fd, int socket_fd)
 {
-	int source_socket_fd = 0;
+	static struct epoll_event event = { 0, };
 
-	if (socket_type == SOCKET_TYPE_CLIENT)
+	if (epoll_fd == -1)
 	{
-		if (port_type == PORT_TYPE_COMMAND)
+		return SESSION_INVALID_SOCKET;
+	}
+
+	if (socket_fd == -1)
+	{
+		return SESSION_INVALID_SOCKET;
+	}
+
+	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &event);
+	
+	return SESSION_SUCCESS;
+}
+
+static int process_client_event(struct session* target_session, int epoll_fd, int event_socket)
+{
+	int ret = 0;
+
+	if (event_socket == target_session->client->data_socket->fd)
+	{
+
+	}
+
+	return SESSION_SUCCESS;
+}
+
+static int process_server_event(struct session* target_session, int epoll_fd, int event_socket)
+{
+	int ret = 0;
+
+	if (event_socket == target_session->server->command_socket->fd)
+	{
+		ret = server_read_packet(target_session, PORT_TYPE_COMMAND);
+		if (ret != SERVER_SUCCESS)
 		{
-			source_socket_fd = source_session->client->command_socket->fd;
+			socket_del_from_epoll(epoll_fd, event_socket);
+			remove_session(target_session);
+
+			return ret;
 		}
-		else
+	}
+	else if (event_socket == target_session->client->data_socket->fd)
+	{
+		/* If FTP server request connect to proxy data socket */
+		ret = server_accept(target_session->server, &client_address);
+		if (ret <= 0)
 		{
-			source_socket_fd = source_session->client->data_socket->fd;
+			return SESSION_INVALID_SOCKET;
 		}
 	}
 	else
 	{
-		if (port_type == PORT_TYPE_COMMAND)
+		/* Connection of FTP server data socket */
+		ret = server_read_packet(target_session, PORT_TYPE_DATA);
+		if (ret != SERVER_SUCCESS)
 		{
-			source_socket_fd = source_session->server->command_socket->fd;
-		}
-		else
-		{
-			source_socket_fd = source_session->server->data_socket->fd;
+			socket_del_from_epoll(epoll_fd, event_socket);
+			remove_session(target_session);
+			
+			return ret;
 		}
 	}
 
-	return (socket_fd == source_socket_fd);
+	return SESSION_SUCCESS;
+}
+
+static int is_socket_in_session(const struct session* source_session, int socket_fd)
+{
+	if (source_session == NULL)
+	{
+		return FALSE;
+	}
+
+	if (socket_fd < 0)
+	{
+		return FALSE;
+	}
+
+	if ((source_session->client->command_socket->fd == socket_fd) ||
+		(source_session->client->data_socket->fd == socket_fd))
+	{
+		return TRUE;
+	}
+	
+	if ((source_session->server->command_socket->fd == socket_fd) ||
+		(source_session->server->data_socket->fd == socket_fd))
+	{
+		return TRUE;
+	}
+
+	return FALSE;
 }
 
 int add_session_to_list(struct list* session_list, int socket_fd, int socket_type, int port_type)
@@ -101,7 +171,7 @@ int remove_session(struct session* target_session)
 	return SESSION_INVALID_SESSION;
 }
 
-struct session* get_session_from_list(const struct list* session_list, int socket_fd, int socket_type, int port_type)
+struct session* get_session_from_list(const struct list* session_list, int socket_fd)
 {
 	struct session* current_session = NULL;
 
@@ -119,21 +189,9 @@ struct session* get_session_from_list(const struct list* session_list, int socke
 		return NULL;
 	}
 
-	if (socket_type != SOCKET_TYPE_CLIENT && socket_type != SOCKET_TYPE_SERVER)
-	{
-		errno = SESSION_INVALID_PARAMS;
-		return NULL;
-	}
-
-	if (port_type != PORT_TYPE_DATA && port_type != PORT_TYPE_COMMAND)
-	{
-		errno = SESSION_INVALID_PARAMS;
-		return NULL;
-	}
-
 	list_for_each_entry(current_session, session_list, list, struct session*)
 	{
-		if (session_socket_cmp(current_session, socket_fd, socket_type, port_type) == TRUE)
+		if (is_socket_in_session(current_session, socket_fd) == TRUE)
 		{
 			return current_session;
 		}
@@ -142,4 +200,55 @@ struct session* get_session_from_list(const struct list* session_list, int socke
 	errno = SESSION_INVALID_SOCKET;
 	return NULL;
 }
+
+int session_polling(int epoll_fd, struct list* session_list, int client_command_socket)
+{
+	int active_event_count = 0;
+	int event_id = 0;
+	int event_socket = -1;
+	static struct epoll_event events[MAX_EVENTS] = { { 0, } };
+	struct session* target_session = NULL;
+	int ret = 0;
+
+	active_event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, EVENT_TIMEOUT);
+	if (active_event_count == -1)
+	{
+		return SERVER_POLLING_WAIT_ERROR;
+	}
+
+	for (event_id = 0; event_id < active_event_count; ++event_id)
+	{
+		event_socket = events[event_id].data.fd;
+		target_session = get_session_from_list(session_list, event_socket);
+
+		if (target_session == NULL)
+		{
+			if (event_socket == client_command_socket)
+			{
+				
+			}
+			else
+			{
+				continue;
+			}
+		}
+
+		ret = process_client_event(target_session->client);
+		if (ret != SESSION_SUCCESS)
+		{
+			ret = process_server_client(target_session->server);
+			if (ret != SESSION_SUCCESS)
+			{
+				/* Error of processing packet */
+
+				continue;
+			}
+		}
+
+		
+	}
+
+	return SESSION_SUCCESS;
+}
+
 

@@ -12,13 +12,6 @@
 #include "utils.h"
 #include "types.h"
 
-static void server_close_client_socket(int epoll_fd, int target_socket)
-{
-	static struct epoll_event event = { 0, };
-
-	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, target_socket, &event);
-}
-
 static int server_command_received(struct session* target_session, char* buffer, int received_bytes)
 {
 	if (target_session == NULL)
@@ -59,7 +52,7 @@ static int server_data_received(struct session* target_session, char* buffer, in
 	return SERVER_SUCCESS;
 }
 
-static int server_read_packet(struct session* target_session, int port_type)
+int server_read_packet(struct session* target_session, int port_type)
 {
 	int received_bytes = 0;
 	int socket_fd = -1;

@@ -18,7 +18,7 @@ enum port_type
 
 enum session_error_type
 {
-	SESSION_ADD_SUCCESS,
+	SESSION_SUCCESS,
 	SESSION_INVALID_LIST,
 	SESSION_ALLOC_FAILED,
 	SESSION_INVALID_SOCKET,
@@ -35,8 +35,8 @@ struct session
 
 int add_session_to_list(struct list* session_list, int socket_fd, int socket_type, int port_type);
 int remove_session(struct session* target_session);
-
-struct session* get_session_from_list(const struct list* session_list, int socket_fd, int socket_type, int port_type);
+struct session* get_session_from_list(const struct list* session_list, int socket_fd);
+int session_polling(int epoll_fd, struct list* session_list, int proxy_command_socket);
 
 #endif
 
