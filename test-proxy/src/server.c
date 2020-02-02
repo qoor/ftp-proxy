@@ -29,15 +29,9 @@ static int server_command_received(struct session* target_session, char* buffer,
 		return SERVER_INVALID_PARAM;
 	}
 
-	if (strncmp(buffer, "PORT", 4) == 0 && strlen(buffer) > 4)
-	{
-		/* TODO: Must modify new PORT command packet */
-		buffer[4] = '\0';
-	}
-
 	/* Command received
 	 * TODO: Must implement packet sender function to client 
-	 * send_packet_to_client(target_session->client_command_socket, buffer, received_bytes);
+	 * send_packet_to_client(target_session->client_command_socket, buffer, received_bytes, PORT_TYPE_COMMAND);
 	*/
 
 	return SERVER_SUCCESS;
@@ -57,7 +51,7 @@ static int server_data_received(struct session* target_session, char* buffer, in
 
 	/* File transfer data received
 	 * TODO: Must implement packet sender function to client
-	 * send_packet_to_client(target_session->client_data_socket, buffer, received_bytes);
+	 * send_packet_to_client(target_session->client_data_socket, buffer, received_bytes, PORT_TYPE_DATA);
 	*/
 
 	return SERVER_SUCCESS;
@@ -285,7 +279,23 @@ int server_free(struct server* target_server)
 	return SERVER_SUCCESS;
 }
 
-int server_polling(struct session* target_session)
+int server_loop(struct list* session_list)
+{
+	if (session_list == NULL)
+	{
+		return SERVER_INVALID;
+	}
+
+	struct session* current_session = NULL;
+	list_for_each_entry(current_session, session_list, list, struct session*)
+	{
+		server_session_polling(current_session);
+	}
+
+	return SERVER_SUCCESS;
+}
+
+int server_session_polling(struct session* target_session)
 {
 	static struct epoll_event events[MAX_EVENTS] = { { 0, }, };
 	int active_event_count = 0;
@@ -351,6 +361,46 @@ int server_polling(struct session* target_session)
 		}
 	}
 
+	return SERVER_SUCCESS;
+}
+
+int send_packet_to_server(struct server* target_server, char* buffer, int received_bytes, int port_type)
+{
+	int socket_fd = -1;
+	int new_buffer_size = received_bytes;
+
+	if (target_server == NULL)
+	{
+		return SERVER_INVALID;
+	}
+
+	if (buffer == NULL)
+	{
+		return SERVER_INVALID_PARAM;
+	}
+	
+	if (port_type == PORT_TYPE_COMMAND)
+	{
+		socket_fd = target_server->command_socket->fd;
+	}
+	else if (port_type == PORT_TYPE_DATA)
+	{
+		socket_fd = target_server->data_socket->fd;
+	}
+	else
+	{
+		return SERVER_INVALID_PARAM;
+	}
+
+	/* Buffer max size is always same as COMMAND_BUFFER_SIZE or DATA_BUFFER_SIZE */
+	if (strncmp(buffer, "PORT", 4) == 0 && strlen(buffer) > 4)
+	{
+		/* TODO: Must modify new PORT command packet */
+		buffer[4] = '\0';
+		new_buffer_size = 5;
+	}
+
+	packet_full_write(socket_fd, buffer, new_buffer_size);
 	return SERVER_SUCCESS;
 }
 
