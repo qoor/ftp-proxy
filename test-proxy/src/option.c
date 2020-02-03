@@ -2,12 +2,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <malloc.h>
+#include <unistd.h>
 
 #include "client.h"
 #include "vector.h"
 #include "types.h"
 #include "server.h"
 #include "utils.h"
+#include "thread.h"
 
 /*
  * Get all of types of option from arguments
@@ -19,6 +22,77 @@
  *			Command : 
  *				debugging: Used to debugging [Developer Only]
 */
+
+struct option* option_create(int num_threads)
+{
+	struct option* new_option = NULL;
+	struct thread_pool* new_thread_pool = NULL;
+	struct socket* new_proxy_socket = NULL;
+	struct sockaddr_in address = { 0, };
+
+	new_option = (struct option*)malloc(sizeof(struct option));
+	if (new_option == NULL)
+	{
+		return NULL;
+	}
+
+	memset(new_option, 0x00, sizeof(struct option));
+	LIST_INIT(&new_option->server_list);
+	LIST_INIT(&new_option->session_list);
+
+	new_thread_pool = thread_pool_create(num_threads);
+	if (new_thread_pool == NULL)
+	{
+		option_free(new_option);
+
+		return NULL;
+	}
+
+	address.sin_addr.s_addr = htonl(INADDR_ANY);
+	address.sin_port = htons(FTP_COMMAND_PORT);
+	address.sin_family = AF_INET;
+	new_proxy_socket = socket_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, COMMAND_BUFFER_SIZE, &address);
+	if (new_proxy_socket == NULL)
+	{
+		option_free(new_option);
+
+		return 0;
+	}
+
+	new_option->proxy_socket = new_proxy_socket;
+
+	return new_option;
+}
+
+int option_free(struct option* target_option)
+{
+	if (target_option == NULL)
+	{
+		return FALSE;
+	}
+
+	if (target_option->thread_pool != NULL)
+	{
+		thread_pool_free(target_option->thread_pool);
+		target_option->thread_pool = NULL;
+	}
+
+	if (target_option->epoll_fd != -1)
+	{
+		close(target_option->epoll_fd);
+		target_option->epoll_fd = -1;
+	}
+
+	if (target_option->proxy_socket != NULL)
+	{
+		socket_free(target_option->proxy_socket);
+		target_option->proxy_socket = NULL;
+	}
+
+	free(target_option);
+
+	return TRUE;
+}
 
 int get_options(struct option* dest, int argc, const char** argv)
 {

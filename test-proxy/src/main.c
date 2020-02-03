@@ -15,42 +15,64 @@
 #include "thread.h"
 #include "types.h"
 
-static void main_free(struct thread_pool* thpool)
+#define THREAD_AMOUNT (10)
+
+static void main_loop(void* arg)
+{
+	struct option* option = NULL;
+	int ret = 0;
+
+	if (arg == NULL)
+	{
+		return;
+	}
+
+	option = (struct option*)arg;
+	while (TRUE)
+	{
+		ret = session_polling(option->epoll_fd, &option->session_list, option->proxy_socket->fd);
+		if (ret != SESSION_SUCCESS)
+		{
+			break;
+		}
+	}
+}
+
+static void main_free(struct option* option)
 {
 	log_free();
-	thread_pool_free(thpool);
+	option_free(option);
 }
 
 int main(int argc, const char** argv)
 {
-	struct thread_pool* thpool = NULL;
-	struct option option;
-	int server_epoll_fd = -1;
-
-	option.server_list.n = &option.server_list;
-	option.server_list.p = &option.server_list;
+	struct option* option = NULL;
 
 	/* Initializing */
-	/* THREAD INIT */
-	thpool = thread_pool_create(10);
-
 	/* LOG INIT */
 	if (log_init() != LOG_INIT_SUCCESS) 
 	{
 		return 0;
 	}
 
-	if (get_options(&option, argc, argv) != OPTION_GET_SUCCESS)
+	option = option_create(THREAD_AMOUNT);
+	if (option == NULL)
 	{
-		main_free(thpool);
 		return 0;
 	}
 
-	/* Main logic write in here */
-	while(TRUE)
+	if (get_options(option, argc, argv) != OPTION_GET_SUCCESS)
 	{
-		/* 메인 로직 : 사용자 옵션 선택 등 구현 */
+		main_free(option);
+
+		return 0;
 	}
+
+	thread_pool_add_work(option->thread_pool, (void*)main_loop, &option);
+	thread_pool_wait(option->thread_pool);
+
+	main_free(option);
+
 	return 0;
 }
 

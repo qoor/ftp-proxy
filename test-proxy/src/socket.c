@@ -10,9 +10,39 @@
 
 #define DEFAULT_BUFFER_SIZE BUFSIZ
 
+static int socket_set_buffer_size(struct socket* target_socket, size_t buffer_size)
+{
+	int ret = 0;
+
+	if (target_socket == NULL)
+	{
+		return SOCKET_INVALID;
+	}
+
+	if (buffer_size <= 0)
+	{
+		buffer_size = DEFAULT_BUFFER_SIZE;
+	}
+
+	ret = setsockopt(target_socket->fd, SOL_SOCKET, SO_RCVBUF, &buffer_size, sizeof(size_t));
+	if (ret < 0)
+	{
+		return SOCKET_OPTION_FAILED;
+	}
+
+	ret = setsockopt(target_socket->fd, SOL_SOCKET, SO_SNDBUF, &buffer_size, sizeof(size_t));
+	if (ret < 0)
+	{
+		return SOCKET_OPTION_FAILED;
+	}
+
+	return SOCKET_SUCCESS;
+}
+
 struct socket* socket_create(int domain, int type, int protocol, size_t buffer_size, const struct sockaddr_in* address)
 {
 	struct socket* new_socket = NULL;
+	int ret = 0;
 
 	errno = 0;
 	
@@ -24,6 +54,7 @@ struct socket* socket_create(int domain, int type, int protocol, size_t buffer_s
 	if (address == NULL)
 	{
 		errno = SOCKET_INVALID;
+
 		return NULL;
 	}
 
@@ -31,6 +62,7 @@ struct socket* socket_create(int domain, int type, int protocol, size_t buffer_s
 	if (new_socket == NULL)
 	{
 		errno = SOCKET_ALLOC_FAILED;
+
 		return NULL;
 	}
 
@@ -40,6 +72,7 @@ struct socket* socket_create(int domain, int type, int protocol, size_t buffer_s
 	{
 		free(new_socket);
 		errno = SOCKET_ALLOC_FAILED;
+
 		return NULL;
 	}
 
@@ -50,6 +83,16 @@ struct socket* socket_create(int domain, int type, int protocol, size_t buffer_s
 	{
 		socket_free(new_socket);
 		errno = SOCKET_OPEN_SOCKET_FAILED;
+
+		return NULL;
+	}
+
+	ret = socket_set_buffer_size(new_socket, buffer_size);
+	if (ret != SOCKET_SUCCESS)
+	{
+		socket_free(new_socket);
+		errno = SOCKET_OPTION_FAILED;
+
 		return NULL;
 	}
 
