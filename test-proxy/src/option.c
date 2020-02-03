@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "thread.h"
 #include "session.h"
+#include "log.h"
 
 /*
  * Get all of types of option from arguments
@@ -31,6 +32,10 @@ struct option* option_create(int num_threads)
 	struct socket* new_proxy_socket = NULL;
 	struct sockaddr_in address = { 0, };
 	int new_epoll = -1;
+	struct epoll_event event = { 0, };
+	int ret = 0;
+
+	event.events = EPOLLIN;
 
 	new_option = (struct option*)malloc(sizeof(struct option));
 	if (new_option == NULL)
@@ -60,9 +65,10 @@ struct option* option_create(int num_threads)
 	{
 		option_free(new_option);
 
-		return 0;
+		return NULL;
 	}
 
+	socket_listen(new_proxy_socket, 0);
 	new_option->proxy_socket = new_proxy_socket;
 
 	new_epoll = epoll_create(SOMAXCONN);
@@ -70,10 +76,21 @@ struct option* option_create(int num_threads)
 	{
 		option_free(new_option);
 
-		return 0;
+		return NULL;
 	}
 
 	new_option->epoll_fd = new_epoll;
+	event.data.fd = new_proxy_socket->fd;
+	event.events = EPOLLIN;
+	ret = epoll_ctl(new_epoll, EPOLL_CTL_ADD, new_proxy_socket->fd, &event);
+	if (ret < 0)
+	{
+		option_free(new_option);
+
+		return NULL;
+	}
+
+	proxy_error("option", "Proxy listen socket fd: %d", new_proxy_socket->fd);
 
 	return new_option;
 }
@@ -221,7 +238,7 @@ int get_option_from_file(struct option* dest)
 		 * Do not pass NULL file pointer to fclose.
 		 * It cause Segmentation fault
 		*/
-		return 0;
+		return FALSE;
 	}
 
 	while (fgets(data, sizeof(data), file))

@@ -15,6 +15,7 @@
 #include "types.h"
 #include "log.h"
 #include "client.h"
+#include "option.h"
 
 int server_command_received(struct session* target_session, char* buffer, int received_bytes)
 {
@@ -99,18 +100,23 @@ static struct socket* server_connect(struct server* target_server)
 		return NULL;
 	}
 
+	DBX();
+
 	ret = socket_connect(new_socket);
 	if (ret != SERVER_SUCCESS)
 	{
 		socket_free(new_socket);
+
 		return NULL;
 	}
+
+	DBX();
 	
 	target_server->command_socket = new_socket;
 
 	server_address = inet_ntoa(target_server->address.sin_addr);
 	proxy_error("server", "Connecting to [%s:%d]...", server_address, ntohs(target_server->address.sin_port));
-	free(server_address);
+	DBX();
 
 	return new_socket;
 }
@@ -120,12 +126,15 @@ struct server* server_create(const struct sockaddr_in* address)
 	struct server* new_server = NULL;
 	struct socket* new_command_socket = NULL;
 	struct socket* new_data_socket = NULL;
+	int ret = 0;
 
 	new_server = (struct server*)malloc(sizeof(struct server));
 	if (new_server == NULL)
 	{
 		return NULL;
 	}
+
+	proxy_error("server", "Address: [%d:%d]", address->sin_addr.s_addr, address->sin_port);
 
 	new_server->address.sin_addr = address->sin_addr;
 	new_server->address.sin_port = address->sin_port;
@@ -149,6 +158,22 @@ struct server* server_create(const struct sockaddr_in* address)
 
 	new_server->command_socket = new_command_socket;
 	new_server->data_socket = new_data_socket;
+
+	ret = socket_add_to_epoll(global_option->epoll_fd, new_command_socket->fd);
+	if (ret != SOCKET_SUCCESS)
+	{
+		server_free(new_server);
+		
+		return NULL;
+	}
+
+	ret = socket_add_to_epoll(global_option->epoll_fd, new_data_socket->fd);
+	if (ret != SOCKET_SUCCESS)
+	{
+		server_free(new_server);
+
+		return NULL;
+	}
 
 	return new_server;
 }
@@ -311,7 +336,7 @@ struct sockaddr_in* server_get_available_address(struct list* server_list)
 		return NULL;
 	}
 
-	current_address = LIST_ELEM(server_list, struct server_address*, list);
+	current_address = LIST_ELEM(server_list->n, struct server_address*, list);
 
 	return &current_address->address;
 }

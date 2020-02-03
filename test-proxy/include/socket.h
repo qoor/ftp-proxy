@@ -15,7 +15,8 @@ enum socket_error_type
 	SOCKET_OPEN_SOCKET_FAILED,
 	SOCKET_FLAG_CONTROL_FAILED,
 	SOCKET_READY_FAILED,
-	SOCKET_OPTION_FAILED
+	SOCKET_OPTION_FAILED,
+	SOCKET_EPOLL_CTL_FAILED
 };
 
 struct socket
@@ -32,6 +33,7 @@ int socket_free(struct socket* target_socket);
 int socket_set_nonblock_mode(int socket_fd);
 int socket_connect(struct socket* target_socket);
 int socket_listen(struct socket* target_socket, int backlog);
+int socket_add_to_epoll(int epoll_fd, int socket_fd);
 
 #endif
 

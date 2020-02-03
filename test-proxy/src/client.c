@@ -18,6 +18,8 @@
 #include "log.h"
 #include "utils.h"
 #include "server.h"
+#include "option.h"
+#include "socket.h"
 
 /* Connect to FTP client data port */
 static struct socket* client_connect(struct client* target_client, struct sockaddr_in* target_address)
@@ -43,8 +45,15 @@ static struct socket* client_connect(struct client* target_client, struct sockad
 		socket_free(new_socket);
 		return NULL;
 	}
-	
+
 	target_client->data_socket = new_socket;
+
+	ret = socket_add_to_epoll(global_option->epoll_fd, new_socket->fd);
+	if (ret != SOCKET_SUCCESS)
+	{
+		socket_free(new_socket);
+		return NULL;
+	}
 
 	client_address = inet_ntoa(target_address->sin_addr);
 	proxy_error("client", "Connecting to [%s:%d]...", client_address, ntohs(target_address->sin_port));
@@ -110,12 +119,15 @@ struct client* client_create(int connected_socket)
 	struct socket* new_command_socket = NULL;
 	struct sockaddr_in client_address = { 0, };
 	uint32_t address_length = sizeof(struct sockaddr);
+	int ret = 0;
 
 	new_client = (struct client*)malloc(sizeof(struct client));
 	if (new_client == NULL)
 	{
 		return NULL;
 	}
+
+	memset(new_client, 0x00, sizeof(struct client));
 
 	getsockname(connected_socket, (struct sockaddr*)&client_address, &address_length);
 	new_client->address.sin_addr = client_address.sin_addr;
@@ -133,9 +145,16 @@ struct client* client_create(int connected_socket)
 	new_client->command_socket = new_command_socket;
 	new_client->data_socket = NULL;
 
+	ret = socket_add_to_epoll(global_option->epoll_fd, new_command_socket->fd);	
+	if (ret != SOCKET_SUCCESS)
+	{
+		client_free(new_client);
+
+		return NULL;
+	}
+
 	return new_client;
 }
-
 
 int client_free(struct client* target_client)
 {

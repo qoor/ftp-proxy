@@ -18,9 +18,6 @@ TODO : SESSION.C
 - RETURN 코드 수정하기 : 함수 동작은 클라이언트 서버 모두 담당하나 리턴코드는 대부분 서버 리턴코드를 반환함
 */
 
-extern struct option* global_option; /* For debugging */
-
-
 static int socket_del_from_epoll(int epoll_fd, int socket_fd)
 {
 	static struct epoll_event event = { 0, };
@@ -37,26 +34,6 @@ static int socket_del_from_epoll(int epoll_fd, int socket_fd)
 		return SESSION_EPOLL_CTL_FAILED;
 	}
 	
-	return SESSION_SUCCESS;
-}
-
-static int socket_add_to_epoll(int epoll_fd, int socket_fd)
-{
-	struct epoll_event event = { 0, };
-	int ret = 0;
-
-	if ((epoll_fd == -1) || (socket_fd == -1))
-	{
-		return SESSION_INVALID_SOCKET;
-	}
-
-	event.events = EPOLLIN;
-	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, socket_fd, &event);
-	if (ret < 0)
-	{
-		return SESSION_EPOLL_CTL_FAILED;
-	}
-
 	return SESSION_SUCCESS;
 }
 
@@ -155,52 +132,37 @@ static int is_socket_in_session(const struct session* source_session, int socket
 		return FALSE;
 	}
 
-	if ((source_session->client->command_socket->fd == socket_fd) ||
-		(source_session->client->data_socket->fd == socket_fd))
+	if (source_session->client != NULL)
 	{
-		return TRUE;
+		if ((source_session->client->command_socket != NULL) && 
+			(source_session->client->command_socket->fd == socket_fd))
+		{
+			return TRUE;
+		}
+
+		if ((source_session->client->data_socket != NULL) && 
+			(source_session->client->data_socket->fd == socket_fd))
+		{
+			return TRUE;
+		}
 	}
-	
-	if ((source_session->server->command_socket->fd == socket_fd) ||
-		(source_session->server->data_socket->fd == socket_fd))
+
+	if (source_session->server != NULL)
 	{
-		return TRUE;
+		if ((source_session->server->command_socket != NULL) && 
+			(source_session->server->command_socket->fd == socket_fd))
+		{
+			return TRUE;
+		}
+
+		if ((source_session->server->data_socket != NULL) && 
+			(source_session->server->data_socket->fd == socket_fd))
+		{
+			return TRUE;
+		}
 	}
 
 	return FALSE;
-}
-
-static int session_add_socket_to_epoll(int epoll_fd, const struct session* target_session)
-{
-	struct epoll_event event = { 0, };
-	int ret = 0;
-
-	event.events = EPOLLIN;
-	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, target_session->client->command_socket->fd, &event);
-	if (ret < 0)
-	{
-		return SESSION_EPOLL_CTL_FAILED;
-	}
-
-	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, target_session->client->data_socket->fd, &event);
-	if (ret < 0)
-	{
-		return SESSION_EPOLL_CTL_FAILED;
-	}
-
-	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, target_session->server->command_socket->fd, &event);
-	if (ret < 0)
-	{
-		return SESSION_EPOLL_CTL_FAILED;
-	}
-
-	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, target_session->server->data_socket->fd, &event);
-	if (ret < 0)
-	{
-		return SESSION_EPOLL_CTL_FAILED;
-	}
-
-	return SESSION_SUCCESS;
 }
 
 static struct session* add_session_to_list(struct list* session_list, int epoll_fd, int event_socket)
@@ -212,7 +174,6 @@ static struct session* add_session_to_list(struct list* session_list, int epoll_
 	uint32_t address_length = sizeof(struct sockaddr);
 	const struct sockaddr_in* server_address = NULL;
 	int connected_socket = -1;
-	int ret = 0;
 
 	if (session_list == NULL)
 	{
@@ -261,13 +222,8 @@ static struct session* add_session_to_list(struct list* session_list, int epoll_
 		return NULL;
 	}
 
-	ret = session_add_socket_to_epoll(epoll_fd, new_session);
-	if (ret != SESSION_SUCCESS)
-	{
-		session_remove_from_list(new_session);
-
-		return NULL;
-	}
+	new_session->client = new_client;
+	new_session->server = new_server;
 
 	LIST_ADD(session_list, &new_session->list);
 
@@ -279,17 +235,6 @@ int session_remove_from_list(struct session* target_session)
 	if (target_session == NULL)
 	{
 		return SESSION_INVALID_SESSION;
-	}
-
-	if (target_session->client->command_socket != NULL)
-	{
-		socket_free(target_session->client->command_socket);
-		target_session->client->command_socket = NULL;
-	}
-	if (target_session->client->data_socket != NULL)
-	{
-		socket_free(target_session->client->data_socket);
-		target_session->client->data_socket = NULL;
 	}
 
 	if (target_session->client != NULL)
@@ -348,7 +293,7 @@ int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_s
 	int active_event_count = 0;
 	int event_id = 0;
 	int event_socket = -1;
-	static struct epoll_event events[MAX_EVENTS] = { { 0, } };
+	struct epoll_event events[MAX_EVENTS] = { { 0, } };
 	struct session* target_session = NULL;
 	int ret = 0;
 
@@ -367,13 +312,18 @@ int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_s
 		{
 			if (event_socket == proxy_connect_socket)
 			{
+				proxy_error("session", "Proxy listen socket: %d, event socket: %d", proxy_connect_socket, event_socket);
 				target_session = add_session_to_list(session_list, epoll_fd, event_socket);
+				if (target_session == NULL)
+				{
+					return SESSION_ADD_FAILED;
+				}
 			}
 
 			if (target_session == NULL)
 			{
 				/* Invalid socket */
-				proxy_error("session", "Target session from socket %d not found", event_socket);
+				/* proxy_error("session", "Target session from socket %d not found", event_socket); */
 			}
 
 			continue;
