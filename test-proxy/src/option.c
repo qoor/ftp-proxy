@@ -11,6 +11,7 @@
 #include "server.h"
 #include "utils.h"
 #include "thread.h"
+#include "session.h"
 
 /*
  * Get all of types of option from arguments
@@ -66,15 +67,31 @@ struct option* option_create(int num_threads)
 
 int option_free(struct option* target_option)
 {
+	struct server_address* current_server = NULL;
+	struct server_address* tmp_server = NULL;
+	struct session* current_session = NULL;
+	struct session* tmp_session = NULL;
+
 	if (target_option == NULL)
 	{
 		return FALSE;
 	}
 
+	/* Finishing all jobs of thread pool first */
 	if (target_option->thread_pool != NULL)
 	{
 		thread_pool_free(target_option->thread_pool);
 		target_option->thread_pool = NULL;
+	}
+
+	list_for_each_entry_safe(current_server, tmp_server, &target_option->server_list, list, struct server_address*)
+	{
+		free(current_server);
+	}
+
+	list_for_each_entry_safe(current_session, tmp_session, &target_option->session_list, list, struct session*)
+	{
+		session_remove_from_list(current_session);
 	}
 
 	if (target_option->epoll_fd != -1)

@@ -13,6 +13,7 @@
 #include "packet.h"
 #include "utils.h"
 #include "types.h"
+#include "hashmap.h"
 
 static int server_command_received(struct session* target_session, char* buffer, int received_bytes)
 {
@@ -338,5 +339,19 @@ int server_insert_address(struct list* server_list, char* address)
 	LIST_ADD(server_list, &server_address->list);
 
 	return SERVER_SUCCESS;
+}
+
+struct sockaddr_in* server_get_available_address(struct list* server_list)
+{
+	struct server_address* current_address = NULL;
+
+	if (server_list == NULL)
+	{
+		return NULL;
+	}
+
+	current_address = LIST_ELEM(server_list, struct server_address*, list);
+
+	return &current_address->address;
 }
 
