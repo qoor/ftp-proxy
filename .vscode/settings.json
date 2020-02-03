@@ -17,7 +17,10 @@
         "socket.h": "c",
         "malloc.h": "c",
         "types.h": "c",
-        "packet.h": "c"
+        "packet.h": "c",
+        "server.h": "c",
+        "utils.h": "c",
+        "fcntl.h": "c"
     },
     "C_Cpp.default.cStandard": "c89",
     "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"

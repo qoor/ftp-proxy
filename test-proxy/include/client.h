@@ -2,10 +2,12 @@
 #define PROXY_INCLUDE_CLIENT_H_
 
 #include "socket.h"
+#include "session.h"
 
 /* Client info structure */
 struct client
 {
+	struct sockaddr_in address;
 	struct socket* command_socket;
 	struct socket* data_socket;
 };
@@ -22,9 +24,13 @@ enum client_error_type
 	CLIENT_POLLING_WAIT_ERROR,
 	CLIENT_CONNECTION_CLOSED,
 	CLIENT_CONNECTION_ERROR,
-	CLIENT_INVALID_PARAM
+	CLIENT_INVALID_PARAM,
+	CLIENT_PORT_PARSE_FAILED
 };
 
+struct client* client_create(int connected_socket);
+int client_free(struct client* target_client);
 int send_packet_to_client(struct client* target_client, char* buffer, int received_bytes, int port_type);
-
+int client_command_received(struct session* target_session, char* buffer, int received_bytes);
+int client_data_received(struct session* target_session, char* buffer, int received_bytes);
 #endif

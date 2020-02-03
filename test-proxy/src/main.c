@@ -80,7 +80,7 @@ int main(int argc, const char** argv)
 
 	proxy_error("main", "Proxy start working..");
 
-	thread_pool_add_work(option->thread_pool, (void*)main_loop, &option);
+	thread_pool_add_work(option->thread_pool, (void*)main_loop, option);
 	thread_pool_wait(option->thread_pool);
 
 	main_free(option);

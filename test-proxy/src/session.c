@@ -13,7 +13,13 @@
 #include "option.h"
 #include "packet.h"
 
+/*
+TODO : SESSION.C 
+- RETURN 코드 수정하기 : 함수 동작은 클라이언트 서버 모두 담당하나 리턴코드는 대부분 서버 리턴코드를 반환함
+*/
+
 extern struct option* global_option; /* For debugging */
+
 
 static int socket_del_from_epoll(int epoll_fd, int socket_fd)
 {
@@ -58,13 +64,27 @@ static int process_client_event(struct session* target_session, int epoll_fd, in
 {
 	int ret = 0;
 
-	if (event_socket == target_session->client->data_socket->fd)
+	if (event_socket == target_session->client->command_socket->fd)
 	{
-		/* Data transfer */
+		ret = session_read_packet(target_session, FROM_CLIENT, PORT_TYPE_COMMAND);
+		if (ret != CLIENT_SUCCESS)
+		{
+			socket_del_from_epoll(epoll_fd, event_socket);
+			session_remove_from_list(target_session);
+
+			return ret;
+		}
 	}
-	else if (event_socket == target_session->client->command_socket->fd)
+	else if (event_socket == target_session->client->data_socket->fd)
 	{
-		/* If this event occurred cause by command socket of connected client event */
+		ret = session_read_packet(target_session, FROM_CLIENT, PORT_TYPE_DATA);
+		if (ret != CLIENT_SUCCESS)
+		{
+			socket_del_from_epoll(epoll_fd, event_socket);
+			session_remove_from_list(target_session);
+
+			return ret;
+		}
 	}
 	else
 	{
@@ -83,7 +103,7 @@ static int process_server_event(struct session* target_session, int epoll_fd, in
 
 	if (event_socket == target_session->server->command_socket->fd)
 	{
-		ret = server_read_packet(target_session, PORT_TYPE_COMMAND);
+		ret = session_read_packet(target_session, FROM_SERVER, PORT_TYPE_COMMAND);
 		if (ret != SERVER_SUCCESS)
 		{
 			socket_del_from_epoll(epoll_fd, event_socket);
@@ -101,7 +121,7 @@ static int process_server_event(struct session* target_session, int epoll_fd, in
 			return SESSION_INVALID_SOCKET;
 		}
 
-		ret = socket_add_to_epoll(epoll_fd, event_socket, EPOLLIN);
+		ret = socket_add_to_epoll(epoll_fd, event_socket);
 		if (ret < 0)
 		{
 			return SESSION_EPOLL_CTL_FAILED;
@@ -110,7 +130,7 @@ static int process_server_event(struct session* target_session, int epoll_fd, in
 	else
 	{
 		/* If this event occurred cause by data socket of connected FTP server event */
-		ret = server_read_packet(target_session, PORT_TYPE_DATA);
+		ret = session_read_packet(target_session, FROM_SERVER, PORT_TYPE_DATA);
 		if (ret != SERVER_SUCCESS)
 		{
 			socket_del_from_epoll(epoll_fd, event_socket);
@@ -217,7 +237,7 @@ static struct session* add_session_to_list(struct list* session_list, int epoll_
 		return NULL;
 	}
 
-	/* new_client = client_create(connected_socket); */
+	new_client = client_create(connected_socket);
 	if (new_client == NULL)
 	{
 		session_remove_from_list(new_session);
@@ -274,10 +294,8 @@ int session_remove_from_list(struct session* target_session)
 
 	if (target_session->client != NULL)
 	{
-		/*
-		 * client_free(target_session->client);
-		 * target_session->client = NULL;
-		*/
+		client_free(target_session->client);
+		target_session->client = NULL;
 	}
 
 	if (target_session->server != NULL)
@@ -325,7 +343,7 @@ struct session* get_session_from_list(const struct list* session_list, int socke
 	return NULL;
 }
 
-int session_polling(int epoll_fd, struct list* session_list, int client_command_socket)
+int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_socket)
 {
 	int active_event_count = 0;
 	int event_id = 0;
@@ -347,7 +365,7 @@ int session_polling(int epoll_fd, struct list* session_list, int client_command_
 
 		if (target_session == NULL)
 		{
-			if (event_socket == client_command_socket)
+			if (event_socket == proxy_connect_socket)
 			{
 				target_session = add_session_to_list(session_list, epoll_fd, event_socket);
 			}

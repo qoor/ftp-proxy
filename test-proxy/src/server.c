@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "types.h"
 #include "log.h"
+#include "client.h"
 
 int server_command_received(struct session* target_session, char* buffer, int received_bytes)
 {
@@ -26,12 +27,7 @@ int server_command_received(struct session* target_session, char* buffer, int re
 	{
 		return SERVER_INVALID_PARAM;
 	}
-
-	/* Command received
-	 * TODO: Must implement packet sender function to client 
-	 * send_packet_to_client(target_session->client_command_socket, buffer, received_bytes, PORT_TYPE_COMMAND);
-	*/
-
+	send_packet_to_client(target_session->client, buffer, received_bytes, PORT_TYPE_COMMAND);
 	return SERVER_SUCCESS;
 }
 
@@ -46,12 +42,7 @@ int server_data_received(struct session* target_session, char* buffer, int recei
 	{
 		return SERVER_INVALID_PARAM;
 	}
-
-	/* File transfer data received
-	 * TODO: Must implement packet sender function to client
-	 * send_packet_to_client(target_session->client_data_socket, buffer, received_bytes, PORT_TYPE_DATA);
-	*/
-
+	send_packet_to_client(target_session->client, buffer, received_bytes, PORT_TYPE_DATA);
 	return SERVER_SUCCESS;
 }
 
