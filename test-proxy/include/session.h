@@ -40,6 +40,7 @@ struct session
 int session_remove_from_list(struct session* target_session);
 struct session* get_session_from_list(const struct list* session_list, int socket_fd);
 int session_polling(int epoll_fd, struct list* session_list, int proxy_command_socket);
+int session_read_packet(struct session* target_session, int from, int port_type);
 
 #endif
 
