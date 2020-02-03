@@ -189,6 +189,7 @@ static struct session* add_session_to_list(struct list* session_list, int epoll_
 	struct sockaddr_in client_address = { 0, };
 	uint32_t address_length = sizeof(struct sockaddr);
 	const struct sockaddr_in* server_address = NULL;
+	int connected_socket = -1;
 	int ret = 0;
 
 	if (session_list == NULL)
@@ -206,23 +207,21 @@ static struct session* add_session_to_list(struct list* session_list, int epoll_
 	new_session->server = NULL;
 	LIST_INIT(&new_session->list);
 
-	/* new_client = client_create(event_socket); */
+	connected_socket = accept(event_socket, (struct sockaddr*)&client_address, &address_length);
+	if (connected_socket < 0)
+	{
+		session_remove_from_list(new_session);
+
+		return NULL;
+	}
+
+	/* new_client = client_create(connected_socket); */
 	if (new_client == NULL)
 	{
 		session_remove_from_list(new_session);
 
 		return NULL;
 	}
-
-	ret = accept(event_socket, (struct sockaddr*)&client_address, &address_length);
-	if (ret < 0)
-	{
-		session_remove_from_list(new_session);
-
-		return NULL;
-	}
-
-	new_client->command_socket->fd = ret;
 
 	server_address = server_get_available_address(&global_option->server_list);
 	if (server_address == NULL)
