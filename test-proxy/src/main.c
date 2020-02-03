@@ -35,7 +35,7 @@ static void main_loop(void* arg)
 		ret = session_polling(option->epoll_fd, &option->session_list, option->proxy_socket->fd);
 		if (ret != SESSION_SUCCESS)
 		{
-			proxy_error("session", "Session poll suspended. [Error: %d]", ret);
+			proxy_error("main", "Session poll suspended. [Error: %d]", ret);
 			break;
 		}
 	}
@@ -50,6 +50,7 @@ static void main_free(struct option* option)
 int main(int argc, const char** argv)
 {
 	struct option* option = NULL;
+	int ret = 0;
 
 	/* Initializing */
 	/* LOG INIT */
@@ -80,8 +81,23 @@ int main(int argc, const char** argv)
 
 	proxy_error("main", "Proxy start working..");
 
-	thread_pool_add_work(option->thread_pool, (void*)main_loop, option);
-	thread_pool_wait(option->thread_pool);
+	ret = thread_pool_add_work(option->thread_pool, (void*)main_loop, option);
+	if (ret != THREAD_SUCCESS)
+	{
+		proxy_error("main", "Failed to adding work to thread pool");
+		main_free(option);
+
+		return 0;
+	}
+
+	ret = thread_pool_wait(option->thread_pool);
+	if (ret != THREAD_SUCCESS)
+	{
+		proxy_error("main", "Failed to waiting thread pool");
+		main_free(option);
+
+		return 0;
+	}
 
 	main_free(option);
 

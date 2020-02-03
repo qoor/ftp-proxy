@@ -50,6 +50,8 @@ struct option* option_create(int num_threads)
 		return NULL;
 	}
 
+	new_option->thread_pool = new_thread_pool;
+
 	address.sin_addr.s_addr = htonl(INADDR_ANY);
 	address.sin_port = htons(FTP_COMMAND_PORT);
 	address.sin_family = AF_INET;
