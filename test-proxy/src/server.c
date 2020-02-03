@@ -15,7 +15,7 @@
 #include "types.h"
 #include "log.h"
 
-static int server_command_received(struct session* target_session, char* buffer, int received_bytes)
+int server_command_received(struct session* target_session, char* buffer, int received_bytes)
 {
 	if (target_session == NULL)
 	{
@@ -35,7 +35,7 @@ static int server_command_received(struct session* target_session, char* buffer,
 	return SERVER_SUCCESS;
 }
 
-static int server_data_received(struct session* target_session, char* buffer, int received_bytes)
+int server_data_received(struct session* target_session, char* buffer, int received_bytes)
 {
 	if (target_session == NULL)
 	{
@@ -226,52 +226,6 @@ int send_packet_to_server(struct server* target_server, char* buffer, int receiv
 	}
 
 	return SERVER_SUCCESS;
-}
-
-int server_read_packet(struct session* target_session, int port_type)
-{
-	int received_bytes = 0;
-	int socket_fd = -1;
-	static char buffer[COMMAND_BUFFER_SIZE] = { 0, };
-
-	if (target_session == NULL)
-	{
-		return SERVER_INVALID;
-	}
-
-	if (port_type == PORT_TYPE_COMMAND)
-	{
-		socket_fd = target_session->server->command_socket->fd;
-	}
-	else if (port_type == PORT_TYPE_DATA)
-	{
-		socket_fd = target_session->server->data_socket->fd;
-	}
-	else
-	{
-		return SERVER_INVALID_PARAM;
-	}
-
-	memset(buffer, 0x00, sizeof(buffer));
-	received_bytes = packet_full_read(socket_fd, buffer, sizeof(buffer));
-	if (received_bytes <= 0)
-	{
-		/* Socket error */
-		if (received_bytes == 0)
-		{
-			/* If connection closed result is not error */
-			return SERVER_CONNECTION_CLOSED;
-		}
-
-		return SERVER_CONNECTION_ERROR;
-	}
-
-	if (port_type == PORT_TYPE_COMMAND)
-	{
-		return server_command_received(target_session, buffer, received_bytes);
-	}
-
-	return server_data_received(target_session, buffer, received_bytes);
 }
 
 /* 

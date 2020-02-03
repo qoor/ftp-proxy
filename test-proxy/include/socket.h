@@ -26,6 +26,7 @@ struct socket
 	struct sockaddr_in address;
 };
 
+struct socket* socket_create_by_socket(int domain, int type, int protocol, size_t buffer_size, int socket_fd);
 struct socket* socket_create(int domain, int type, int protocol, size_t buffer_size, const struct sockaddr_in* address);
 int socket_free(struct socket* target_socket);
 int socket_set_nonblock_mode(int socket_fd);

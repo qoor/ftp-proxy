@@ -39,6 +39,57 @@ static int socket_set_buffer_size(struct socket* target_socket, size_t buffer_si
 	return SOCKET_SUCCESS;
 }
 
+struct socket* socket_create_by_socket(int domain, int type, int protocol, size_t buffer_size, int socket_fd)
+{
+	struct socket* new_socket = NULL;
+	struct sockaddr_in address = { 0, };
+	uint32_t address_length = sizeof(struct sockaddr_in);
+	int ret = 0;
+
+	if (buffer_size <= 0)
+	{
+		buffer_size = DEFAULT_BUFFER_SIZE;
+	}
+
+	if (socket_fd == -1)
+	{
+		return NULL;
+	}
+
+	new_socket = (struct socket*)malloc(sizeof(struct socket));
+	if (new_socket == NULL)
+	{
+		return NULL;
+	}
+
+	memset(new_socket, 0x00, sizeof(struct socket));
+	new_socket->buffer = (char*)malloc(buffer_size);
+	if (new_socket->buffer == NULL)
+	{
+		free(new_socket);
+		
+		return NULL;
+	}
+
+	new_socket->buffer_size = buffer_size;
+
+	new_socket->fd = socket_fd;
+	ret = socket_set_buffer_size(new_socket, buffer_size);
+	if (ret != SOCKET_SUCCESS)
+	{
+		socket_free(new_socket);
+
+		return NULL;
+	}
+
+	getsockname(socket_fd, (struct sockaddr*)&address, &address_length);
+	new_socket->address.sin_addr = address.sin_addr;
+	new_socket->address.sin_port = address.sin_port;
+	new_socket->address.sin_family = AF_INET;
+
+	return new_socket;
+}
+
 struct socket* socket_create(int domain, int type, int protocol, size_t buffer_size, const struct sockaddr_in* address)
 {
 	struct socket* new_socket = NULL;
@@ -66,7 +117,7 @@ struct socket* socket_create(int domain, int type, int protocol, size_t buffer_s
 		return NULL;
 	}
 
-	memset(&new_socket->address, 0x00, sizeof(struct sockaddr_in));
+	memset(new_socket, 0x00, sizeof(struct socket));
 	new_socket->buffer = (char*)malloc(buffer_size);
 	if (new_socket->buffer == NULL)
 	{
