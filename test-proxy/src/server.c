@@ -349,6 +349,7 @@ int server_insert_address(struct list* server_list, char* address)
 	server_address->address.sin_port = htons(port);
 	server_address->address.sin_family = AF_INET;
 
+	LIST_INIT(&server_address->list);
 	LIST_ADD(server_list, &server_address->list);
 
 	proxy_error("server", "Address [%s:%d] listed", host, port);

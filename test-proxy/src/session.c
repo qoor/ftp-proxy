@@ -204,6 +204,7 @@ static struct session* add_session_to_list(struct list* session_list, int epoll_
 	
 	new_session->client = NULL;
 	new_session->server = NULL;
+	LIST_INIT(&new_session->list);
 
 	/* new_client = client_create(event_socket); */
 	if (new_client == NULL)
@@ -284,7 +285,10 @@ int session_remove_from_list(struct session* target_session)
 		target_session->server = NULL;
 	}
 
-	LIST_DEL(&target_session->list);
+	if (LIST_ISEMPTY(&target_session->list) == FALSE)
+	{
+		LIST_DEL(&target_session->list);
+	}
 
 	return SESSION_INVALID_SESSION;
 }
