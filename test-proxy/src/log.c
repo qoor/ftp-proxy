@@ -16,6 +16,7 @@ static FILE* log_message_size_check_file = NULL;
 static char* log_buffer = NULL;
 
 static pthread_mutex_t logfile_mutex;
+static pthread_mutex_t error_mutex;
 
 /*
  * Initialize log system
@@ -52,6 +53,7 @@ int log_init(void)
 	memset(log_buffer, 0x00, MAX_LOG_MESSAGE_SIZE * sizeof(char));
 
 	pthread_mutex_init(&logfile_mutex, NULL);
+	pthread_mutex_init(&error_mutex, NULL);
 
 	return LOG_INIT_SUCCESS;
 }
@@ -151,6 +153,8 @@ void log_free(void)
 	log_message_size_check_file = NULL;
 
 	pthread_mutex_unlock(&logfile_mutex);
+	pthread_mutex_destroy(&logfile_mutex);
+	pthread_mutex_destroy(&error_mutex);
 }
 
 void proxy_error(const char* tagname, const char* format, ...)
@@ -162,6 +166,7 @@ void proxy_error(const char* tagname, const char* format, ...)
 		return;
 	}
 
+	pthread_mutex_lock(&error_mutex);
 	if (tagname != NULL)
 	{
 		fprintf(stderr, "[%s] ", tagname);
@@ -171,5 +176,6 @@ void proxy_error(const char* tagname, const char* format, ...)
 	vfprintf(stderr, format, args);
 	va_end(args);
 	fprintf(stderr, "\n");
+	pthread_mutex_unlock(&error_mutex);
 }
 

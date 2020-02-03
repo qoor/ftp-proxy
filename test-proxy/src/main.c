@@ -17,6 +17,8 @@
 
 #define THREAD_AMOUNT (10)
 
+struct option* global_option = NULL;
+
 static void main_loop(void* arg)
 {
 	struct option* option = NULL;
@@ -33,6 +35,7 @@ static void main_loop(void* arg)
 		ret = session_polling(option->epoll_fd, &option->session_list, option->proxy_socket->fd);
 		if (ret != SESSION_SUCCESS)
 		{
+			proxy_error("session", "Session poll suspended. [Error: %d]", ret);
 			break;
 		}
 	}
@@ -52,21 +55,30 @@ int main(int argc, const char** argv)
 	/* LOG INIT */
 	if (log_init() != LOG_INIT_SUCCESS) 
 	{
+		fprintf(stderr, "[main] log initialize failed\n");
+
 		return 0;
 	}
 
 	option = option_create(THREAD_AMOUNT);
 	if (option == NULL)
 	{
+		proxy_error("main", "Not enough memory to initialize option");
+
 		return 0;
 	}
 
 	if (get_options(option, argc, argv) != OPTION_GET_SUCCESS)
 	{
+		proxy_error("main", "Option parse failed");
 		main_free(option);
 
 		return 0;
 	}
+
+	global_option = option;
+
+	proxy_error("main", "Proxy start working..");
 
 	thread_pool_add_work(option->thread_pool, (void*)main_loop, &option);
 	thread_pool_wait(option->thread_pool);

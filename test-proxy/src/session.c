@@ -8,6 +8,10 @@
 #include "types.h"
 #include "client.h"
 #include "server.h"
+#include "log.h"
+#include "option.h"
+
+extern struct option* global_option; /* For debugging */
 
 static int socket_del_from_epoll(int epoll_fd, int socket_fd)
 {
@@ -54,18 +58,17 @@ static int process_client_event(struct session* target_session, int epoll_fd, in
 
 	if (event_socket == target_session->client->data_socket->fd)
 	{
-
+		/* Data transfer */
 	}
 	else if (event_socket == target_session->client->command_socket->fd)
 	{
-		/*
-		 * Do nothing
-		 * Because connection already accepted when session_polling
-		*/
+		/* If this event occurred cause by command socket of connected client event */
 	}
 	else
 	{
-		/* If this event occurred cause by command socket of connected client event */
+		proxy_error("session", "Invalid client socket fd: %d", event_socket);
+
+		return SESSION_INVALID_SOCKET;
 	}
 
 	return SESSION_SUCCESS;
@@ -183,6 +186,9 @@ static struct session* add_session_to_list(struct list* session_list, int epoll_
 	struct session* new_session = NULL;
 	struct client* new_client = NULL;
 	struct server* new_server = NULL;
+	struct sockaddr_in client_address = { 0, };
+	uint32_t address_length = sizeof(struct sockaddr);
+	const struct sockaddr_in* server_address = NULL;
 	int ret = 0;
 
 	if (session_list == NULL)
@@ -207,9 +213,25 @@ static struct session* add_session_to_list(struct list* session_list, int epoll_
 		return NULL;
 	}
 
-	new_session->client->command_socket->fd = event_socket;
+	ret = accept(event_socket, (struct sockaddr*)&client_address, &address_length);
+	if (ret < 0)
+	{
+		session_remove_from_list(new_session);
 
-	/* new_server = server_create(const struct sockaddr_in *address) */
+		return NULL;
+	}
+
+	new_client->command_socket->fd = ret;
+
+	server_address = server_get_available_address(&global_option->server_list);
+	if (server_address == NULL)
+	{
+		session_remove_from_list(new_session);
+
+		return NULL;
+	}
+
+	new_server = server_create(server_address);
 	if (new_server == NULL)
 	{
 		session_remove_from_list(new_session);
@@ -294,6 +316,7 @@ struct session* get_session_from_list(const struct list* session_list, int socke
 	}
 
 	errno = SESSION_INVALID_SOCKET;
+
 	return NULL;
 }
 
@@ -322,15 +345,12 @@ int session_polling(int epoll_fd, struct list* session_list, int client_command_
 			if (event_socket == client_command_socket)
 			{
 				target_session = add_session_to_list(session_list, epoll_fd, event_socket);
-				if (target_session == NULL)
-				{
-					continue;
-				}
-
 			}
-			else
+
+			if (target_session == NULL)
 			{
 				/* Invalid socket */
+				proxy_error("session", "Target session from socket %d not found", event_socket);
 			}
 
 			continue;
@@ -343,6 +363,7 @@ int session_polling(int epoll_fd, struct list* session_list, int client_command_
 			if (ret != SESSION_SUCCESS)
 			{
 				/* Error of processing packet */
+				proxy_error("session", "Unknown error [Error: %d]", ret);
 
 				continue;
 			}

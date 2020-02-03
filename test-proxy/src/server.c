@@ -13,7 +13,7 @@
 #include "packet.h"
 #include "utils.h"
 #include "types.h"
-#include "hashmap.h"
+#include "log.h"
 
 static int server_command_received(struct session* target_session, char* buffer, int received_bytes)
 {
@@ -85,6 +85,8 @@ static struct socket* server_listen(struct server* target_server)
 
 	target_server->data_socket = new_socket;
 
+	proxy_error("server", "Listening data port...");
+
 	return new_socket;
 }
 
@@ -92,6 +94,7 @@ static struct socket* server_listen(struct server* target_server)
 static struct socket* server_connect(struct server* target_server)
 {
 	struct socket* new_socket = NULL;
+	char* server_address = NULL;
 	int ret = 0;
 
 	if (target_server == NULL)
@@ -113,6 +116,10 @@ static struct socket* server_connect(struct server* target_server)
 	}
 	
 	target_server->command_socket = new_socket;
+
+	server_address = inet_ntoa(target_server->address.sin_addr);
+	proxy_error("server", "Connecting to [%s:%d]...", server_address, ntohs(target_server->address.sin_port));
+	free(server_address);
 
 	return new_socket;
 }
@@ -210,6 +217,7 @@ int send_packet_to_server(struct server* target_server, char* buffer, int receiv
 	if ((is_port_command(buffer, received_bytes) == TRUE) && server_listen(target_server) == SERVER_SUCCESS)
 	{
 		new_buffer_size = generate_port_command(socket_fd, buffer);
+		proxy_error("server", "%s", buffer);
 	}
 
 	if (new_buffer_size > 0)
@@ -274,6 +282,7 @@ int server_accept(struct server* target_server, struct sockaddr_in* client_addre
 {
 	int client_socket = -1;
 	static unsigned int client_address_length = sizeof(struct sockaddr);
+	char* client_address_str = NULL;
 
 	if (target_server == NULL || client_address == NULL)
 	{
@@ -290,6 +299,10 @@ int server_accept(struct server* target_server, struct sockaddr_in* client_addre
 	{
 		return -1;
 	}
+
+	client_address_str = inet_ntoa(client_address->sin_addr);
+	proxy_error("server", "Data port connection accepted [Address: %s:%d]", client_address_str, ntohs(client_address->sin_port));
+	free(client_address_str);
 
 	return client_socket;
 }
@@ -337,6 +350,8 @@ int server_insert_address(struct list* server_list, char* address)
 	server_address->address.sin_family = AF_INET;
 
 	LIST_ADD(server_list, &server_address->list);
+
+	proxy_error("server", "Address [%s:%d] listed", host, port);
 
 	return SERVER_SUCCESS;
 }
