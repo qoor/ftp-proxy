@@ -47,6 +47,7 @@ int server_loop(struct list* session_list);
 int server_session_polling(struct session* target_session);
 int send_packet_to_server(struct server* target_server, char* buffer, int received_bytes, int port_type);
 int server_read_packet(struct session* target_session, int port_type);
+int server_accept(struct server* target_server, struct sockaddr_in* client_address);
 
 #endif
 

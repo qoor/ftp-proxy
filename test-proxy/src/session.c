@@ -42,6 +42,7 @@ static int process_client_event(struct session* target_session, int epoll_fd, in
 
 static int process_server_event(struct session* target_session, int epoll_fd, int event_socket)
 {
+	struct sockaddr_in client_address = { 0, };
 	int ret = 0;
 
 	if (event_socket == target_session->server->command_socket->fd)
@@ -139,7 +140,7 @@ int add_session_to_list(struct list* session_list, int socket_fd, int socket_typ
 
 	LIST_ADD(session_list, &new_session->list);
 
-	return SESSION_ADD_SUCCESS;
+	return SESSION_SUCCESS;
 }
 
 int remove_session(struct session* target_session)
@@ -225,7 +226,11 @@ int session_polling(int epoll_fd, struct list* session_list, int client_command_
 		{
 			if (event_socket == client_command_socket)
 			{
-				
+				/*
+				 * New client connection to proxy command socket
+				 * TODO: Must implement and call client accept function
+				 * Ex) client_accept(event_socket);
+				*/
 			}
 			else
 			{
@@ -233,10 +238,10 @@ int session_polling(int epoll_fd, struct list* session_list, int client_command_
 			}
 		}
 
-		ret = process_client_event(target_session->client);
+		ret = process_client_event(target_session, epoll_fd, event_socket);
 		if (ret != SESSION_SUCCESS)
 		{
-			ret = process_server_client(target_session->server);
+			ret = process_server_event(target_session, epoll_fd, event_socket);
 			if (ret != SESSION_SUCCESS)
 			{
 				/* Error of processing packet */
