@@ -9,9 +9,6 @@
 #include "socket.h"
 #include "list.h"
 
-#ifndef FTP_COMMAND_PORT
-#define FTP_COMMAND_PORT (21)
-#endif
 
 /* Server addresses for server list from option */
 struct server_address

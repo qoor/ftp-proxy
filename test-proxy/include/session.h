@@ -7,6 +7,8 @@
 #define MAX_EVENTS (256) /* Max amount of event until while epoll_wait once */
 #define EVENT_TIMEOUT (0) /* EPOLL event timeout as milliseconds */
 
+#define FTP_COMMAND_PORT (21)
+
 enum socket_type
 {
     SOCKET_TYPE_SERVER,
