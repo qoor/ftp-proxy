@@ -48,18 +48,14 @@ int server_data_received(struct session* target_session, char* buffer, int recei
 }
 
 /* Listen FTP data port */
-static struct socket* server_listen(struct server* target_server)
+static struct socket* server_listen(struct server* target_server, uint32_t net_host)
 {
 	struct sockaddr_in bind_address = { 0, };
 	struct socket* new_socket = NULL;
 	int ret = 0;
+	int reuse_addr = TRUE;
 
-	if (target_server == NULL)
-	{
-		return NULL;
-	}
-
-	bind_address.sin_addr.s_addr = htonl(INADDR_ANY);
+	bind_address.sin_addr.s_addr = net_host;
 	bind_address.sin_family = AF_INET;
 	bind_address.sin_port = htons(0); /* Port 0 is ANY */
 	new_socket = socket_create(PF_INET, SOCK_STREAM, IPPROTO_TCP, DATA_BUFFER_SIZE, &bind_address);
@@ -68,10 +64,27 @@ static struct socket* server_listen(struct server* target_server)
 		return NULL;
 	}
 
-	ret = socket_listen(new_socket, 0);
+	ret = setsockopt(new_socket->fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(int));
 	if (ret < 0)
 	{
 		socket_free(new_socket);
+
+		return NULL;
+	}
+
+	ret = socket_listen(new_socket, 0);
+	if (ret != SERVER_SUCCESS)
+	{
+		socket_free(new_socket);
+
+		return NULL;
+	}
+
+	ret = socket_add_to_epoll(global_option->epoll_fd, new_socket->fd);
+	if (ret != SOCKET_SUCCESS)
+	{
+		socket_free(new_socket);
+
 		return NULL;
 	}
 
@@ -100,8 +113,6 @@ static struct socket* server_connect(struct server* target_server)
 		return NULL;
 	}
 
-	DBX();
-
 	ret = socket_connect(new_socket);
 	if (ret != SERVER_SUCCESS)
 	{
@@ -109,14 +120,11 @@ static struct socket* server_connect(struct server* target_server)
 
 		return NULL;
 	}
-
-	DBX();
 	
 	target_server->command_socket = new_socket;
 
 	server_address = inet_ntoa(target_server->address.sin_addr);
-	proxy_error("server", "Connecting to [%s:%d]...", server_address, ntohs(target_server->address.sin_port));
-	DBX();
+	proxy_error("server", "Connected to [%s:%d] socket fd: %d", server_address, ntohs(target_server->address.sin_port), new_socket->fd);
 
 	return new_socket;
 }
@@ -125,7 +133,6 @@ struct server* server_create(const struct sockaddr_in* address)
 {
 	struct server* new_server = NULL;
 	struct socket* new_command_socket = NULL;
-	struct socket* new_data_socket = NULL;
 	int ret = 0;
 
 	new_server = (struct server*)malloc(sizeof(struct server));
@@ -133,8 +140,6 @@ struct server* server_create(const struct sockaddr_in* address)
 	{
 		return NULL;
 	}
-
-	proxy_error("server", "Address: [%d:%d]", address->sin_addr.s_addr, address->sin_port);
 
 	new_server->address.sin_addr = address->sin_addr;
 	new_server->address.sin_port = address->sin_port;
@@ -148,17 +153,7 @@ struct server* server_create(const struct sockaddr_in* address)
 		return NULL;
 	}
 
-	new_data_socket = server_listen(new_server);
-	if (new_data_socket == NULL)
-	{
-		server_free(new_server);
-
-		return NULL;
-	}
-
 	new_server->command_socket = new_command_socket;
-	new_server->data_socket = new_data_socket;
-
 	ret = socket_add_to_epoll(global_option->epoll_fd, new_command_socket->fd);
 	if (ret != SOCKET_SUCCESS)
 	{
@@ -167,13 +162,7 @@ struct server* server_create(const struct sockaddr_in* address)
 		return NULL;
 	}
 
-	ret = socket_add_to_epoll(global_option->epoll_fd, new_data_socket->fd);
-	if (ret != SOCKET_SUCCESS)
-	{
-		server_free(new_server);
-
-		return NULL;
-	}
+	new_server->data_socket = NULL;
 
 	return new_server;
 }
@@ -201,11 +190,19 @@ int server_free(struct server* target_server)
 	return SERVER_SUCCESS;
 }
 
-int send_packet_to_server(struct server* target_server, char* buffer, int received_bytes, int port_type)
+int send_packet_to_server(struct session* target_session, char* buffer, int received_bytes, int port_type)
 {
 	int socket_fd = -1;
 	int new_buffer_size = received_bytes;
+	struct server* target_server = NULL;
+	struct socket* data_listen_socket = NULL;
 
+	if (target_session == NULL)
+	{
+		return SERVER_INVALID;
+	}
+
+	target_server = target_session->server;
 	if (target_server == NULL)
 	{
 		return SERVER_INVALID;
@@ -230,10 +227,14 @@ int send_packet_to_server(struct server* target_server, char* buffer, int receiv
 	}
 
 	/* Buffer max size is always same as COMMAND_BUFFER_SIZE or DATA_BUFFER_SIZE */
-	if ((is_port_command(buffer, received_bytes) == TRUE) && server_listen(target_server) == SERVER_SUCCESS)
+	if (is_port_command(buffer, received_bytes) == TRUE)
 	{
-		new_buffer_size = generate_port_command(socket_fd, buffer);
-		proxy_error("server", "%s", buffer);
+		data_listen_socket = server_listen(target_session->server, target_session->host_address.sin_addr.s_addr);
+		if (data_listen_socket != NULL)
+		{
+			new_buffer_size = generate_port_command(data_listen_socket->fd, buffer);
+			proxy_error("server", "%s", buffer);
+		}
 	}
 
 	if (new_buffer_size > 0)
@@ -260,7 +261,7 @@ int server_accept(struct server* target_server, struct sockaddr_in* client_addre
 	}
 	
 	client_socket = accept(target_server->data_socket->fd, (struct sockaddr*)client_address, &client_address_length);
-	if (client_socket <= 0)
+	if ((client_socket < 0) && (errno != EINPROGRESS))
 	{
 		return -1;
 	}

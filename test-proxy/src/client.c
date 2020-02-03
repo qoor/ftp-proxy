@@ -22,13 +22,13 @@
 #include "socket.h"
 
 /* Connect to FTP client data port */
-static struct socket* client_connect(struct client* target_client, struct sockaddr_in* target_address)
+struct socket* client_connect(struct client* target_client, struct sockaddr_in* target_address)
 {
 	struct socket* new_socket = NULL;
 	char* client_address = NULL;
 	int ret = 0;
 
-	if (target_client == NULL)
+	if ((target_client == NULL) || (target_address == NULL))
 	{
 		return NULL;
 	}
@@ -57,7 +57,6 @@ static struct socket* client_connect(struct client* target_client, struct sockad
 
 	client_address = inet_ntoa(target_address->sin_addr);
 	proxy_error("client", "Connecting to [%s:%d]...", client_address, ntohs(target_address->sin_port));
-	free(client_address);
 
 	return new_socket;
 }
@@ -78,22 +77,25 @@ int client_command_received(struct session* target_session, char* buffer, int re
 	}
 	
 	/* PORT 커맨드 읽어서 그 데이터로 CONNECT 하는 부분 -> DATA 소켓 */
-	client_data_address = get_address_from_port_command(buffer, received_bytes);
-	if (client_data_address != NULL)
+	if (is_port_command(buffer, received_bytes) == TRUE)
 	{
-		new_data_socket = client_connect(target_session->client, client_data_address);
-		if (new_data_socket == NULL)
+		client_data_address = get_address_from_port_command(buffer + 5, received_bytes); /* Jump `PORT ` */
+		if (client_data_address != NULL)
 		{
+			new_data_socket = client_connect(target_session->client, client_data_address);
+			if (new_data_socket == NULL)
+			{
+				free(client_data_address);
+				session_remove_from_list(target_session);
+
+				return CLIENT_PORT_PARSE_FAILED;
+			}
+
 			free(client_data_address);
-			session_remove_from_list(target_session);
-
-			return CLIENT_PORT_PARSE_FAILED;
 		}
-
-		free(client_data_address);
 	}
 	
-	send_packet_to_server(target_session->server, buffer, received_bytes, PORT_TYPE_COMMAND);
+	send_packet_to_server(target_session, buffer, received_bytes, PORT_TYPE_COMMAND);
 
 	return CLIENT_SUCCESS;
 }
@@ -109,16 +111,14 @@ int client_data_received(struct session* target_session, char* buffer, int recei
 	{
 		return CLIENT_INVALID_PARAM;
 	}
-	send_packet_to_server(target_session->server, buffer, received_bytes, PORT_TYPE_DATA);
+	send_packet_to_server(target_session, buffer, received_bytes, PORT_TYPE_DATA);
 	return CLIENT_SUCCESS;
 }
 
-struct client* client_create(int connected_socket)
+struct client* client_create(struct session* parent_session, int connected_socket)
 {
 	struct client* new_client = NULL;
 	struct socket* new_command_socket = NULL;
-	struct sockaddr_in client_address = { 0, };
-	uint32_t address_length = sizeof(struct sockaddr);
 	int ret = 0;
 
 	new_client = (struct client*)malloc(sizeof(struct client));
@@ -128,11 +128,6 @@ struct client* client_create(int connected_socket)
 	}
 
 	memset(new_client, 0x00, sizeof(struct client));
-
-	getsockname(connected_socket, (struct sockaddr*)&client_address, &address_length);
-	new_client->address.sin_addr = client_address.sin_addr;
-	new_client->address.sin_port = client_address.sin_port;
-	new_client->address.sin_family = AF_INET;
 
 	new_command_socket = socket_create_by_socket(PF_INET, SOCK_STREAM, IPPROTO_TCP, COMMAND_BUFFER_SIZE, connected_socket);
 	if (new_command_socket == NULL)
@@ -145,7 +140,7 @@ struct client* client_create(int connected_socket)
 	new_client->command_socket = new_command_socket;
 	new_client->data_socket = NULL;
 
-	ret = socket_add_to_epoll(global_option->epoll_fd, new_command_socket->fd);	
+	ret = socket_add_to_epoll(global_option->epoll_fd, connected_socket);
 	if (ret != SOCKET_SUCCESS)
 	{
 		client_free(new_client);

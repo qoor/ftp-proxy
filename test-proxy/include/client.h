@@ -28,9 +28,11 @@ enum client_error_type
 	CLIENT_PORT_PARSE_FAILED
 };
 
-struct client* client_create(int connected_socket);
+struct client* client_create(struct session* parent_session, int connected_socket);
 int client_free(struct client* target_client);
 int send_packet_to_client(struct client* target_client, char* buffer, int received_bytes, int port_type);
 int client_command_received(struct session* target_session, char* buffer, int received_bytes);
 int client_data_received(struct session* target_session, char* buffer, int received_bytes);
+struct socket* client_connect(struct client* target_client, struct sockaddr_in* target_address);
+
 #endif

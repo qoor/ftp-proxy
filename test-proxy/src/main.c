@@ -23,6 +23,7 @@ static void main_loop(void* arg)
 {
 	struct option* option = NULL;
 	int ret = 0;
+	struct epoll_event events[MAX_EVENTS];
 
 	if (arg == NULL)
 	{
@@ -32,7 +33,7 @@ static void main_loop(void* arg)
 	option = (struct option*)arg;
 	while (TRUE)
 	{
-		ret = session_polling(option->epoll_fd, &option->session_list, option->proxy_socket->fd);
+		ret = session_polling(option->epoll_fd, &option->session_list, option->proxy_socket->fd, events);
 		if (ret != SESSION_SUCCESS)
 		{
 			proxy_error("main", "Session poll suspended. [Error: %d]", ret);

@@ -37,7 +37,7 @@ int is_port_command(const char *command, int size)
 		return FALSE;
 	}
 
-	if (size < 6) /* `PORT (` */
+	if (size < 5) /* `PORT ` */
 	{
 		return FALSE;
 	}
@@ -47,9 +47,11 @@ int is_port_command(const char *command, int size)
 		return FALSE;
 	}
 
-	while (((current_pos - command) < size) && ((*current_pos != '\r') || (*current_pos != '\n') || (*current_pos != '\0')))
+	current_pos += 5;
+
+	while (((current_pos - command) < size) && (*current_pos != '\r') && (*current_pos != '\n') && (*current_pos != '\0'))
 	{
-		if (isxdigit(*current_pos) == TRUE)
+		if (isxdigit(*current_pos) != FALSE)
 		{
 			value_have = TRUE;
 		}
@@ -67,26 +69,23 @@ int is_port_command(const char *command, int size)
 		++current_pos;
 	}
 
-	/* delimiter_count value must same or over than 5
-	 * Ex) PORT IP ADDRESS,PORT1,PORT2
-	 * PORT 1 X 256 + PORT2 = 목적지 PORT
+	/* 
+	 * delimiter_count value must same or over than 5
+	 * Ex) PORT IP AD,DR,ES,S,PORT1,PORT2
+	 * PORT 1 X 256 + PORT2 = Destination PORT
 	*/
 
-	return (delimiter_count >= 5);
+	return (delimiter_count == 5);
 }
 
 int generate_port_command(int socket_fd, char *destination)
 {
-	struct sockaddr_in address = {
-		0,
-	};
+	struct sockaddr_in address = { 0, };
 	unsigned int address_size = sizeof(struct sockaddr);
 	char *address_str = NULL;
 	char *address_str_pos = NULL;
 	uint16_t port = 0;
-	char port_str[32] = {
-		0,
-	};
+	char port_str[32] = { 0, };
 	int ret = 0;
 
 	if (socket_fd < 0 || destination == NULL)
@@ -109,23 +108,23 @@ int generate_port_command(int socket_fd, char *destination)
 		return -3;
 	}
 
-	while (*address_str_pos != '\0')
+	while ((*address_str_pos != '\r') && (*address_str_pos != '\n') && (*address_str_pos != '\0'))
 	{
 		if (*address_str_pos == '.')
 		{
 			*address_str_pos = ',';
 		}
+
+		++address_str_pos;
 	}
 
-	strncpy(destination, "PORT ", 6);
+	strncpy(destination, "PORT ", 5 + 1); /* Include NULL */
 	strncat(destination, address_str, strlen(address_str));
 	strncat(destination, ",", strlen(","));
 
 	sprintf(port_str, "%d,%d", (port / 256), (port % 256));
 	strncat(destination, port_str, strlen(port_str));
 	strncat(destination, "\n", strlen("\n"));
-
-	free(address_str);
 
 	return strlen(destination);
 }
@@ -150,6 +149,7 @@ struct sockaddr_in *get_address_from_port_command(char *buffer, int received_byt
 	addrstr = (char*)malloc(received_bytes + 1);
 	if (addrstr == NULL)
 	{
+		free(addr);
 		return NULL;
 	}
 	
@@ -175,6 +175,7 @@ struct sockaddr_in *get_address_from_port_command(char *buffer, int received_byt
 	/* make sure we got the right number of values */
 	if (commas != 5)
 	{
+		free(addr);
 		free(addrstr);
 		return NULL;
 	}
@@ -183,6 +184,7 @@ struct sockaddr_in *get_address_from_port_command(char *buffer, int received_byt
 	rc = inet_aton(addrstr, &addr->sin_addr);
 	if (rc == 0)
 	{
+		free(addr);
 		free(addrstr);
 		return NULL;
 	}
@@ -213,6 +215,7 @@ struct sockaddr_in *get_address_from_port_command(char *buffer, int received_byt
 	/* validate the port */
 	if (val > 0xFF || port > 0xFF)
 	{
+		free(addr);
 		free(addrstr);
 		return NULL;
 	}

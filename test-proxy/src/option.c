@@ -34,8 +34,7 @@ struct option* option_create(int num_threads)
 	int new_epoll = -1;
 	struct epoll_event event = { 0, };
 	int ret = 0;
-
-	event.events = EPOLLIN;
+	int reuse_addr = TRUE;
 
 	new_option = (struct option*)malloc(sizeof(struct option));
 	if (new_option == NULL)
@@ -68,8 +67,22 @@ struct option* option_create(int num_threads)
 		return NULL;
 	}
 
-	socket_listen(new_proxy_socket, 0);
 	new_option->proxy_socket = new_proxy_socket;
+	ret = setsockopt(new_proxy_socket->fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(int));
+	if (ret < 0)
+	{
+		option_free(new_option);
+
+		return NULL;
+	}
+	
+	ret = socket_listen(new_proxy_socket, 0);
+	if (ret != SOCKET_SUCCESS)
+	{
+		option_free(new_option);
+
+		return NULL;
+	}
 
 	new_epoll = epoll_create(SOMAXCONN);
 	if (new_epoll < 0)

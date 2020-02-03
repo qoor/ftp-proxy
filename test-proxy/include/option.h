@@ -1,7 +1,10 @@
 #ifndef PROXY_INCLUDE_OPTION_H_
 #define PROXY_INCLUDE_OPTION_H_
 
+#include <sys/epoll.h>
+
 #include "list.h"
+#include "session.h"
 
 #define OPTION_FILE_NAME "proxy"
 #define OPTION_FILE_EXT "cfg"

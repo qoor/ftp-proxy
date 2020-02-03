@@ -186,7 +186,7 @@ int socket_free(struct socket* target_socket)
 
 int socket_set_nonblock_mode(int socket_fd)
 {
-	/*int flags = 0;
+	int flags = 0;
 	int ret = 0;
 
 	if (socket_fd == -1)
@@ -204,7 +204,7 @@ int socket_set_nonblock_mode(int socket_fd)
 	if (ret < 0)
 	{
 		return SOCKET_FLAG_CONTROL_FAILED;
-	}*/
+	}
 
 	return SOCKET_SUCCESS;
 }
@@ -219,8 +219,6 @@ int socket_connect(struct socket* target_socket)
 	}
 
 	ret = connect(target_socket->fd, (struct sockaddr*)&target_socket->address, sizeof(struct sockaddr));
-
-	proxy_error("socket", "Socket fd: %d, address: [%d:%d]", target_socket->fd, target_socket->address.sin_addr.s_addr, ntohs(target_socket->address.sin_port));
 	if ((ret < 0) && (errno != EINPROGRESS))
 	{
 		DBX();
@@ -265,6 +263,7 @@ int socket_add_to_epoll(int epoll_fd, int socket_fd)
 	int ret = 0;
 
 	event.events = EPOLLIN;
+	event.data.fd = socket_fd;
 
 	if ((epoll_fd == -1) || (socket_fd == -1))
 	{
@@ -276,6 +275,8 @@ int socket_add_to_epoll(int epoll_fd, int socket_fd)
 	{
 		return SOCKET_EPOLL_CTL_FAILED;
 	}
+
+	proxy_error("socket", "Socket fd %d added to epoll fd %d", socket_fd, epoll_fd);
 
 	return SOCKET_SUCCESS;
 }

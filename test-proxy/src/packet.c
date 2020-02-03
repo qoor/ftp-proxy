@@ -4,6 +4,7 @@
 #include <errno.h>
 
 #include "types.h"
+#include "log.h"
 
 int packet_read(int fd, void* buffer, size_t size)
 {

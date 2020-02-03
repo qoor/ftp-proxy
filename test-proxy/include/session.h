@@ -1,6 +1,8 @@
 #ifndef PROXY_INCLUDE_SESSION_H__
 #define PROXY_INCLUDE_SESSION_H__
 
+#include <sys/epoll.h>
+
 #include "list.h"
 #include "socket.h"
 
@@ -38,12 +40,13 @@ struct session
 	struct client* client;
 	struct server* server;
 	struct list list;
+	struct sockaddr_in host_address; /* For alias to outside my IP */
 };
 
 int session_remove_from_list(struct session* target_session);
 struct session* get_session_from_list(const struct list* session_list, int socket_fd);
-int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_socket);
-int session_read_packet(struct session* target_session, int from, int port_type);
+int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_socket, struct epoll_event* events);
+int session_read_packet(struct session* target_session, int event_socket);
 
 #endif
 
