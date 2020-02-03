@@ -7,10 +7,10 @@
 #define MAX_EVENTS (256) /* Max amount of event until while epoll_wait once */
 #define EVENT_TIMEOUT (0) /* EPOLL event timeout as milliseconds */
 
-enum socket_type
+enum packet_from_type
 {
-    SOCKET_TYPE_SERVER,
-    SOCKET_TYPE_CLIENT
+    FROM_SERVER,
+	FORM_CLIENT
 };
 
 enum port_type

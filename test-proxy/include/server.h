@@ -55,6 +55,8 @@ int server_read_packet(struct session* target_session, int port_type);
 int server_accept(struct server* target_server, struct sockaddr_in* client_address);
 int server_insert_address(struct list* server_list, char* address);
 struct sockaddr_in* server_get_available_address(struct list* server_list);
+int server_command_received(struct session* target_session, char* buffer, int received_bytes);
+int server_data_received(struct session* target_session, char* buffer, int received_bytes);
 
 #endif
 

@@ -3,6 +3,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <errno.h>
+
 #include <sys/epoll.h>
 
 #include "types.h"
@@ -10,6 +11,7 @@
 #include "server.h"
 #include "log.h"
 #include "option.h"
+#include "packet.h"
 
 extern struct option* global_option; /* For debugging */
 
@@ -377,4 +379,73 @@ int session_polling(int epoll_fd, struct list* session_list, int client_command_
 	return SESSION_SUCCESS;
 }
 
+int session_read_packet(struct session* target_session, int from, int port_type)
+{
+	int received_bytes = 0;
+	int socket_fd = -1;
+	static char buffer[COMMAND_BUFFER_SIZE] = { 0, };
+
+	if (target_session == NULL)
+	{
+		return SERVER_INVALID;
+	}
+
+	if (port_type == PORT_TYPE_COMMAND)
+	{
+		if (from == FROM_SERVER)
+		{
+			socket_fd = target_session->server->command_socket->fd;
+		}
+		else
+		{
+			socket_fd = target_session->client->command_socket->fd;
+		}
+	}
+	else if (port_type == PORT_TYPE_DATA)
+	{
+		if (from == FROM_SERVER)
+		{
+			socket_fd = target_session->server->data_socket->fd;
+		}
+		else
+		{
+			socket_fd = target_session->client->data_socket->fd;
+		}
+	}
+	else
+	{
+		return SERVER_INVALID_PARAM;
+	}
+
+	memset(buffer, 0x00, sizeof(buffer));
+	received_bytes = packet_full_read(socket_fd, buffer, sizeof(buffer));
+	if (received_bytes <= 0)
+	{
+		/* Socket error */
+		if (received_bytes == 0)
+		{
+			/* If connection closed result is not error */
+			return SERVER_CONNECTION_CLOSED;
+		}
+
+		return SERVER_CONNECTION_ERROR;
+	}
+
+	if (port_type == PORT_TYPE_COMMAND)
+	{
+		if (from == FROM_SERVER)
+		{
+			return server_command_received(target_session, buffer, received_bytes);
+		}
+		
+		return client_command_received(target_session, buffer, received_bytes);
+	}
+
+	if (from == FROM_SERVER)
+	{
+		return server_data_received(target_session, buffer, received_bytes);
+	}
+	
+	return client_data_received(target_session, buffer, received_bytes);
+}
 
