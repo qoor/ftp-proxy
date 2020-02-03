@@ -1,6 +1,8 @@
 #ifndef PROXY_INCLUDE_OPTION_H_
 #define PROXY_INCLUDE_OPTION_H_
 
+#include "list.h"
+
 #define OPTION_FILE_NAME "proxy"
 #define OPTION_FILE_EXT "cfg"
 #define OPTION_FILE_PATH ("" OPTION_FILE_NAME "." OPTION_FILE_EXT)
@@ -8,7 +10,7 @@
 
 struct option
 {
-	struct vector* connection_strings;
+	struct list server_list;
 };
 
 /* OPTION RETURN CODE DEFINE */

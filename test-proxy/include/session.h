@@ -4,6 +4,9 @@
 #include "list.h"
 #include "socket.h"
 
+#define MAX_EVENTS (256) /* Max amount of event until while epoll_wait once */
+#define EVENT_TIMEOUT (0) /* EPOLL event timeout as milliseconds */
+
 enum socket_type
 {
     SOCKET_TYPE_SERVER,
@@ -23,7 +26,8 @@ enum session_error_type
 	SESSION_ALLOC_FAILED,
 	SESSION_INVALID_SOCKET,
 	SESSION_INVALID_PARAMS,
-	SESSION_INVALID_SESSION
+	SESSION_INVALID_SESSION,
+	SESSION_EPOLL_CTL_FAILED
 };
 
 struct session
@@ -33,8 +37,7 @@ struct session
 	struct list list;
 };
 
-int add_session_to_list(struct list* session_list, int socket_fd, int socket_type, int port_type);
-int remove_session(struct session* target_session);
+int session_remove_from_list(struct session* target_session);
 struct session* get_session_from_list(const struct list* session_list, int socket_fd);
 int session_polling(int epoll_fd, struct list* session_list, int proxy_command_socket);
 

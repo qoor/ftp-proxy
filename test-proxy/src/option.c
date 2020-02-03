@@ -5,8 +5,9 @@
 
 #include "client.h"
 #include "vector.h"
-
 #include "types.h"
+#include "server.h"
+#include "utils.h"
 
 /*
  * Get all of types of option from arguments
@@ -135,7 +136,7 @@ int get_option_from_file(struct option* dest)
 		if (keycmp(config_key, "server_address") == 0)
 		{
 			skip_whitespace(&current_pos);
-			vector_push_back(dest->connection_strings, current_pos);
+			server_insert_address(&dest->server_list, current_pos);
 		}
 		else
 		{

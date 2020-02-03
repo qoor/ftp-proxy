@@ -12,19 +12,39 @@
 static int socket_del_from_epoll(int epoll_fd, int socket_fd)
 {
 	static struct epoll_event event = { 0, };
+	int ret = 0;
 
-	if (epoll_fd == -1)
+	if ((epoll_fd == -1) || (socket_fd == -1))
 	{
 		return SESSION_INVALID_SOCKET;
 	}
 
-	if (socket_fd == -1)
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &event);
+	if (ret < 0)
 	{
-		return SESSION_INVALID_SOCKET;
+		return SESSION_EPOLL_CTL_FAILED;
 	}
-
-	epoll_ctl(epoll_fd, EPOLL_CTL_DEL, socket_fd, &event);
 	
+	return SESSION_SUCCESS;
+}
+
+static int socket_add_to_epoll(int epoll_fd, int socket_fd)
+{
+	struct epoll_event event = { 0, };
+	int ret = 0;
+
+	if ((epoll_fd == -1) || (socket_fd == -1))
+	{
+		return SESSION_INVALID_SOCKET;
+	}
+
+	event.events = EPOLLIN;
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, socket_fd, &event);
+	if (ret < 0)
+	{
+		return SESSION_EPOLL_CTL_FAILED;
+	}
+
 	return SESSION_SUCCESS;
 }
 
@@ -35,6 +55,17 @@ static int process_client_event(struct session* target_session, int epoll_fd, in
 	if (event_socket == target_session->client->data_socket->fd)
 	{
 
+	}
+	else if (event_socket == target_session->client->command_socket->fd)
+	{
+		/*
+		 * Do nothing
+		 * Because connection already accepted when session_polling
+		*/
+	}
+	else
+	{
+		/* If this event occurred cause by command socket of connected client event */
 	}
 
 	return SESSION_SUCCESS;
@@ -51,7 +82,7 @@ static int process_server_event(struct session* target_session, int epoll_fd, in
 		if (ret != SERVER_SUCCESS)
 		{
 			socket_del_from_epoll(epoll_fd, event_socket);
-			remove_session(target_session);
+			session_remove_from_list(target_session);
 
 			return ret;
 		}
@@ -64,15 +95,21 @@ static int process_server_event(struct session* target_session, int epoll_fd, in
 		{
 			return SESSION_INVALID_SOCKET;
 		}
+
+		ret = socket_add_to_epoll(epoll_fd, event_socket, EPOLLIN);
+		if (ret < 0)
+		{
+			return SESSION_EPOLL_CTL_FAILED;
+		}
 	}
 	else
 	{
-		/* Connection of FTP server data socket */
+		/* If this event occurred cause by data socket of connected FTP server event */
 		ret = server_read_packet(target_session, PORT_TYPE_DATA);
 		if (ret != SERVER_SUCCESS)
 		{
 			socket_del_from_epoll(epoll_fd, event_socket);
-			remove_session(target_session);
+			session_remove_from_list(target_session);
 			
 			return ret;
 		}
@@ -108,42 +145,92 @@ static int is_socket_in_session(const struct session* source_session, int socket
 	return FALSE;
 }
 
-int add_session_to_list(struct list* session_list, int socket_fd, int socket_type, int port_type)
+static int session_add_socket_to_epoll(int epoll_fd, const struct session* target_session)
+{
+	struct epoll_event event = { 0, };
+	int ret = 0;
+
+	event.events = EPOLLIN;
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, target_session->client->command_socket->fd, &event);
+	if (ret < 0)
+	{
+		return SESSION_EPOLL_CTL_FAILED;
+	}
+
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, target_session->client->data_socket->fd, &event);
+	if (ret < 0)
+	{
+		return SESSION_EPOLL_CTL_FAILED;
+	}
+
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, target_session->server->command_socket->fd, &event);
+	if (ret < 0)
+	{
+		return SESSION_EPOLL_CTL_FAILED;
+	}
+
+	ret = epoll_ctl(epoll_fd, EPOLL_CTL_ADD, target_session->server->data_socket->fd, &event);
+	if (ret < 0)
+	{
+		return SESSION_EPOLL_CTL_FAILED;
+	}
+
+	return SESSION_SUCCESS;
+}
+
+static struct session* add_session_to_list(struct list* session_list, int epoll_fd, int event_socket)
 {
 	struct session* new_session = NULL;
+	struct client* new_client = NULL;
+	struct server* new_server = NULL;
+	int ret = 0;
 
 	if (session_list == NULL)
 	{
-		return SESSION_INVALID_LIST;
-	}
-
-	if (socket_fd < 0)
-	{
-		return SESSION_INVALID_SOCKET;
-	}
-
-	if ((socket_type != SOCKET_TYPE_CLIENT && socket_type != SOCKET_TYPE_SERVER) ||
-		(port_type != PORT_TYPE_DATA && port_type != PORT_TYPE_COMMAND))
-	{
-		return SESSION_INVALID_PARAMS;
+		return NULL;
 	}
 
 	new_session = (struct session*)malloc(sizeof(struct session));
 	if (new_session == NULL)
 	{
-		return SESSION_ALLOC_FAILED;
+		return NULL;
+	}
+	
+	new_session->client = NULL;
+	new_session->server = NULL;
+
+	/* new_client = client_create(event_socket); */
+	if (new_client == NULL)
+	{
+		session_remove_from_list(new_session);
+
+		return NULL;
 	}
 
-	new_session->client->command_socket = NULL;
-	new_session->client->data_socket = NULL;
-	new_session->server = NULL;
+	new_session->client->command_socket->fd = event_socket;
+
+	/* new_server = server_create(const struct sockaddr_in *address) */
+	if (new_server == NULL)
+	{
+		session_remove_from_list(new_session);
+
+		return NULL;
+	}
+
+	ret = session_add_socket_to_epoll(epoll_fd, new_session);
+	if (ret != SESSION_SUCCESS)
+	{
+		session_remove_from_list(new_session);
+
+		return NULL;
+	}
 
 	LIST_ADD(session_list, &new_session->list);
 
-	return SESSION_SUCCESS;
+	return new_session;
 }
 
-int remove_session(struct session* target_session)
+int session_remove_from_list(struct session* target_session)
 {
 	if (target_session == NULL)
 	{
@@ -159,6 +246,14 @@ int remove_session(struct session* target_session)
 	{
 		socket_free(target_session->client->data_socket);
 		target_session->client->data_socket = NULL;
+	}
+
+	if (target_session->client != NULL)
+	{
+		/*
+		 * client_free(target_session->client);
+		 * target_session->client = NULL;
+		*/
 	}
 
 	if (target_session->server != NULL)
@@ -226,16 +321,19 @@ int session_polling(int epoll_fd, struct list* session_list, int client_command_
 		{
 			if (event_socket == client_command_socket)
 			{
-				/*
-				 * New client connection to proxy command socket
-				 * TODO: Must implement and call client accept function
-				 * Ex) client_accept(event_socket);
-				*/
+				target_session = add_session_to_list(session_list, epoll_fd, event_socket);
+				if (target_session == NULL)
+				{
+					continue;
+				}
+
 			}
 			else
 			{
-				continue;
+				/* Invalid socket */
 			}
+
+			continue;
 		}
 
 		ret = process_client_event(target_session, epoll_fd, event_socket);
@@ -248,9 +346,7 @@ int session_polling(int epoll_fd, struct list* session_list, int client_command_
 
 				continue;
 			}
-		}
-
-		
+		}	
 	}
 
 	return SESSION_SUCCESS;

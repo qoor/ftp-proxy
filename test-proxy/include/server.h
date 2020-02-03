@@ -9,11 +9,17 @@
 #include "socket.h"
 #include "list.h"
 
-#define MAX_EVENTS (254) /* Amount of file descriptor of monitoring */
-#define EVENT_TIMEOUT (0) /* EPOLL event timeout as milliseconds */
-
+#ifndef FTP_COMMAND_PORT
 #define FTP_COMMAND_PORT (21)
-#define FTP_DATA_PORT (20)
+#endif
+
+/* Server addresses for server list from option */
+struct server_address
+{
+	struct sockaddr_in address;
+	struct list list;
+};
+/* */
 
 /* Server info structure */
 struct server
@@ -21,7 +27,6 @@ struct server
 	struct sockaddr_in address;
 	struct socket* command_socket;
 	struct socket* data_socket;
-	int epoll_fd;
 };
 /* */
 
@@ -48,6 +53,7 @@ int server_session_polling(struct session* target_session);
 int send_packet_to_server(struct server* target_server, char* buffer, int received_bytes, int port_type);
 int server_read_packet(struct session* target_session, int port_type);
 int server_accept(struct server* target_server, struct sockaddr_in* client_address);
+int server_insert_address(struct list* server_list, char* address);
 
 #endif
 

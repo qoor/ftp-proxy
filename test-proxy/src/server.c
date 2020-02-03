@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#include <arpa/inet.h>
+
 #include "packet.h"
 #include "utils.h"
 #include "types.h"
@@ -57,10 +59,7 @@ static struct socket* server_listen(struct server* target_server)
 {
 	struct sockaddr_in bind_address = { 0, };
 	struct socket* new_socket = NULL;
-	struct epoll_event event = { 0, };
 	int ret = 0;
-
-	event.events = EPOLLIN;
 
 	if (target_server == NULL)
 	{
@@ -83,13 +82,6 @@ static struct socket* server_listen(struct server* target_server)
 		return NULL;
 	}
 
-	ret = epoll_ctl(target_server->epoll_fd, EPOLL_CTL_ADD, new_socket->fd, &event);
-	if (ret < 0)
-	{
-		socket_free(new_socket);
-		return NULL;
-	}
-
 	target_server->data_socket = new_socket;
 
 	return new_socket;
@@ -99,10 +91,7 @@ static struct socket* server_listen(struct server* target_server)
 static struct socket* server_connect(struct server* target_server)
 {
 	struct socket* new_socket = NULL;
-	struct epoll_event event = { 0, };
 	int ret = 0;
-
-	event.events = EPOLLIN;
 
 	if (target_server == NULL)
 	{
@@ -122,22 +111,16 @@ static struct socket* server_connect(struct server* target_server)
 		return NULL;
 	}
 	
-	ret = epoll_ctl(target_server->epoll_fd, EPOLL_CTL_ADD, new_socket->fd, &event);
-	if (ret < 0)
-	{
-		socket_free(new_socket);
-		return NULL;
-	}
-
 	target_server->command_socket = new_socket;
 
 	return new_socket;
 }
 
-struct server* server_create_and_insert(struct session* session, const struct sockaddr_in* address)
+struct server* server_create(const struct sockaddr_in* address)
 {
 	struct server* new_server = NULL;
 	struct socket* new_command_socket = NULL;
+	struct socket* new_data_socket = NULL;
 
 	new_server = (struct server*)malloc(sizeof(struct server));
 	if (new_server == NULL)
@@ -152,14 +135,21 @@ struct server* server_create_and_insert(struct session* session, const struct so
 	new_command_socket = server_connect(new_server);
 	if (new_command_socket == NULL)
 	{
-		free(new_server);
+		server_free(new_server);
+
 		return NULL;
 	}
 
-	new_server->data_socket = NULL;
-	new_server->epoll_fd = -1;
+	new_data_socket = server_listen(new_server);
+	if (new_data_socket == NULL)
+	{
+		server_free(new_server);
 
-	session->server = new_server;
+		return NULL;
+	}
+
+	new_server->command_socket = new_command_socket;
+	new_server->data_socket = new_data_socket;
 
 	return new_server;
 }
@@ -180,12 +170,6 @@ int server_free(struct server* target_server)
 	{
 		socket_free(target_server->data_socket);
 		target_server->data_socket = NULL;
-	}
-
-	if (target_server->epoll_fd >= 0)
-	{
-		close(target_server->epoll_fd);
-		target_server->epoll_fd = -1;
 	}
 
 	free(target_server);
@@ -275,14 +259,10 @@ int server_read_packet(struct session* target_session, int port_type)
 
 	if (port_type == PORT_TYPE_COMMAND)
 	{
-		server_command_received(target_session, buffer, received_bytes);
-	}
-	else
-	{
-		server_data_received(target_session, buffer, received_bytes);
+		return server_command_received(target_session, buffer, received_bytes);
 	}
 
-	return SERVER_SUCCESS;
+	return server_data_received(target_session, buffer, received_bytes);
 }
 
 /* 
@@ -293,7 +273,6 @@ int server_accept(struct server* target_server, struct sockaddr_in* client_addre
 {
 	int client_socket = -1;
 	static unsigned int client_address_length = sizeof(struct sockaddr);
-	static struct epoll_event event = { 0, };
 
 	if (target_server == NULL || client_address == NULL)
 	{
@@ -301,7 +280,6 @@ int server_accept(struct server* target_server, struct sockaddr_in* client_addre
 	}
 	
 	client_socket = accept(target_server->data_socket->fd, (struct sockaddr*)client_address, &client_address_length);
-			/* If connection accept failed */
 	if (client_socket <= 0)
 	{
 		return -1;
@@ -312,9 +290,53 @@ int server_accept(struct server* target_server, struct sockaddr_in* client_addre
 		return -1;
 	}
 
-	event.events = EPOLLIN;
-	epoll_ctl(target_server->epoll_fd, EPOLL_CTL_ADD, client_socket, &event);
-	
 	return client_socket;
+}
+
+int server_insert_address(struct list* server_list, char* address)
+{
+	char* colon_pos = NULL;
+	char host[32] = { 0, };
+	size_t address_length = 0;
+	uint32_t address_net = 0;
+	uint16_t port = 0;
+	struct server_address* server_address = NULL;
+
+	if ((server_list == NULL) || (address == NULL))
+	{
+		return SERVER_INVALID_PARAM;
+	}
+
+	colon_pos = strchr(address, ':');
+	if ((colon_pos == NULL) || (*(colon_pos + 1) == '\0'))
+	{
+		return SERVER_INVALID_PARAM;
+	}
+
+	port = atoi(colon_pos + 1);
+
+	address_length = colon_pos - address;
+	strncpy(host, address, address_length);
+	host[address_length] = '\0';
+	address_net = inet_addr(host);
+	if (address_net == INADDR_NONE)
+	{
+		return SERVER_INVALID_PARAM;
+	}
+
+	server_address = (struct server_address*)malloc(sizeof(struct server_address));
+	if (server_address == NULL)
+	{
+		return SERVER_ALLOC_FAILED;
+	}
+
+	memset(&server_address->address, 0x00, sizeof(struct sockaddr_in));
+	server_address->address.sin_addr.s_addr = address_net;
+	server_address->address.sin_port = htons(port);
+	server_address->address.sin_family = AF_INET;
+
+	LIST_ADD(server_list, &server_address->list);
+
+	return SERVER_SUCCESS;
 }
 

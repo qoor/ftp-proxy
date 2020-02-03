@@ -24,9 +24,11 @@ static void main_free(struct thread_pool* thpool)
 int main(int argc, const char** argv)
 {
 	struct thread_pool* thpool = NULL;
-	struct option option = { .connection_strings = NULL };
+	struct option option;
 	int server_epoll_fd = -1;
 
+	option.server_list.n = &option.server_list;
+	option.server_list.p = &option.server_list;
 
 	/* Initializing */
 	/* THREAD INIT */
@@ -35,13 +37,6 @@ int main(int argc, const char** argv)
 	/* LOG INIT */
 	if (log_init() != LOG_INIT_SUCCESS) 
 	{
-		return 0;
-	}
-
-	/* OPTION INIT */
-	if ((option.connection_strings = vector_init(0)) == NULL)
-	{
-		main_free(thpool);
 		return 0;
 	}
 
@@ -58,5 +53,4 @@ int main(int argc, const char** argv)
 	}
 	return 0;
 }
-
 

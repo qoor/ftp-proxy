@@ -3,8 +3,6 @@
 
 #include "socket.h"
 
-#define MAX_CLIENT_EVENTS (254) /* Amount of file descriptor of monitoring */
-#define EVENT_TIMEOUT (8) /* EPOLL event timeout as milliseconds */
 #define FTP_COMMAND_PORT (21)
 
 struct client
