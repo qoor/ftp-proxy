@@ -30,6 +30,7 @@ struct option* option_create(int num_threads)
 	struct thread_pool* new_thread_pool = NULL;
 	struct socket* new_proxy_socket = NULL;
 	struct sockaddr_in address = { 0, };
+	int new_epoll = -1;
 
 	new_option = (struct option*)malloc(sizeof(struct option));
 	if (new_option == NULL)
@@ -61,6 +62,16 @@ struct option* option_create(int num_threads)
 	}
 
 	new_option->proxy_socket = new_proxy_socket;
+
+	new_epoll = epoll_create(SOMAXCONN);
+	if (new_epoll < 0)
+	{
+		option_free(new_option);
+
+		return 0;
+	}
+
+	new_option->epoll_fd = new_epoll;
 
 	return new_option;
 }
