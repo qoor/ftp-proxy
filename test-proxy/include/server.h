@@ -23,6 +23,7 @@ struct server
 	struct sockaddr_in address;
 	struct socket* command_socket;
 	struct socket* data_socket;
+	struct socket* connection_socket;
 };
 /* */
 
@@ -50,6 +51,7 @@ int server_insert_address(struct list* server_list, char* address);
 struct sockaddr_in* server_get_available_address(struct list* server_list);
 int server_command_received(struct session* target_session, char* buffer, int received_bytes);
 int server_data_received(struct session* target_session, char* buffer, int received_bytes);
+int server_data_connection_received(struct session* target_session, char* buffer, int received_bytes);
 
 #endif
 

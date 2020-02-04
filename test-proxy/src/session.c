@@ -53,6 +53,10 @@ static int session_get_server_socket_type(int socket_fd, const struct server* so
 	{
 		return PORT_TYPE_DATA;
 	}
+	else if (source_server->connection_socket != NULL && source_server->connection_socket->fd == socket_fd)
+	{
+		return PORT_TYPE_DATA_CONNECTION;
+	}
 
 	return -1;
 }
@@ -288,8 +292,10 @@ int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_s
 				data_client_socket = server_accept(target_session->server, &data_client_address);
 				if (data_client_socket == NULL)
 				{
-					continue;
+					proxy_error("session", "Proxy data socket failed to accept FTP server");
 				}
+				
+				continue;
 			}
 
 			ret = session_read_packet(target_session, event_socket);
@@ -349,16 +355,19 @@ int session_read_packet(struct session* target_session, int event_socket)
 	}
 	else
 	{
+		from = FROM_SERVER;
 		port_type = session_get_server_socket_type(event_socket, target_session->server);
 		if (port_type == PORT_TYPE_COMMAND)
 		{
-			from = FROM_SERVER;
 			server_command_received(target_session, buffer, received_bytes);
 		}
 		else if (port_type == PORT_TYPE_DATA)
 		{
-			from = FROM_SERVER;
 			server_data_received(target_session, buffer, received_bytes);
+		}
+		else if (port_type == PORT_TYPE_DATA_CONNECTION)
+		{
+			server_data_connection_received(target_session, buffer, received_bytes);
 		}
 		else
 		{

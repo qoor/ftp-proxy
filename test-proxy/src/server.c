@@ -47,6 +47,21 @@ int server_data_received(struct session* target_session, char* buffer, int recei
 	return SERVER_SUCCESS;
 }
 
+int server_data_connection_received(struct session* target_session, char* buffer, int received_bytes)
+{
+	if (target_session == NULL)
+	{
+		return SERVER_INVALID;
+	}
+
+	if (buffer == NULL)
+	{
+		return SERVER_INVALID_PARAM;
+	}
+	send_packet_to_client(target_session->client, buffer, received_bytes, PORT_TYPE_DATA);
+	return SERVER_SUCCESS;
+}
+
 /* Listen FTP data port */
 static struct socket* server_listen(struct server* target_server, uint32_t net_host)
 {
@@ -163,6 +178,7 @@ struct server* server_create(const struct sockaddr_in* address)
 	}
 
 	new_server->data_socket = NULL;
+	new_server->connection_socket = NULL;
 
 	return new_server;
 }
@@ -220,6 +236,10 @@ int send_packet_to_server(struct session* target_session, char* buffer, int rece
 	else if (port_type == PORT_TYPE_DATA)
 	{
 		socket_fd = target_server->data_socket->fd;
+	}
+	else if (port_type == PORT_TYPE_DATA_CONNECTION)
+	{
+		socket_fd = target_server->connection_socket->fd;
 	}
 	else
 	{
@@ -280,7 +300,7 @@ struct socket* server_accept(struct server* target_server, struct sockaddr_in* c
 		return NULL;
 	}
 
-	target_server->data_socket = new_socket;
+	target_server->connection_socket = new_socket;
 
 	client_address_str = inet_ntoa(client_address->sin_addr);
 	proxy_error("server", "Data port connection accepted [Address: %s:%d]", client_address_str, ntohs(client_address->sin_port));

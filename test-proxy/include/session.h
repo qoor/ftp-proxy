@@ -20,7 +20,8 @@ enum packet_from_type
 enum port_type
 {
     PORT_TYPE_COMMAND,
-    PORT_TYPE_DATA
+    PORT_TYPE_DATA,
+	PORT_TYPE_DATA_CONNECTION
 };
 
 enum session_error_type
