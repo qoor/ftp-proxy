@@ -397,4 +397,5 @@ int server_data_closed(struct server* target_server)
 		socket_free(target_server->connection_socket);
 		target_server->connection_socket = NULL;
 	}
+	return SERVER_SUCCESS;
 }

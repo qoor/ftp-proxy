@@ -131,10 +131,13 @@ int generate_port_command(int socket_fd, char *destination)
 
 struct sockaddr_in *get_address_from_port_command(char *buffer, int received_bytes)
 {
-	char *addrstr, *p, *portstr;
-	int commas = 0, rc;
+	char *addrstr = NULL;
+	char *p = NULL;
+	char *portstr = NULL;
+	int commas = 0;
+	int rc = 0;
 	short port = 0;
-	unsigned long val;
+	unsigned long val = 0;
 	struct sockaddr_in* addr = NULL;
 
 	addr = (struct sockaddr_in*)malloc(sizeof(struct sockaddr_in));
