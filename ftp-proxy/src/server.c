@@ -214,7 +214,6 @@ int server_free(struct server* target_server)
 
 int send_packet_to_server(struct session* target_session, char* buffer, int received_bytes, int port_type)
 {
-	int socket_fd = -1;
 	int new_buffer_size = received_bytes;
 	struct server* target_server = NULL;
 	struct socket* data_listen_socket = NULL;

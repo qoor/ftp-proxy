@@ -120,6 +120,9 @@ static int session_write_packet(struct session* target_session, int event_socket
 		}
 		
 		packet_full_write(event_socket, target_socket->buffer, target_socket->buffer_used);
+		target_socket->buffer_used = 0;
+
+		memset(target_socket->buffer, 0x00, target_socket->buffer_size * sizeof(char));
 	}
 
 	return SESSION_SUCCESS;

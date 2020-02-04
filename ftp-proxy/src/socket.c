@@ -224,7 +224,6 @@ int socket_connect(struct socket* target_socket)
 	ret = connect(target_socket->fd, (struct sockaddr*)&target_socket->address, sizeof(struct sockaddr));
 	if ((ret < 0) && (errno != EINPROGRESS))
 	{
-		DBX();
 		return SOCKET_READY_FAILED;
 	}
 

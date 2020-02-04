@@ -1,7 +1,9 @@
 #include "packet.h"
 
+#include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 
 #include "types.h"
 #include "log.h"
@@ -14,7 +16,11 @@ int packet_read(int fd, void* buffer, size_t size)
 	do {
 		ret = read(fd, buffer, size);
 		error = errno;
+		printf("[+] loop packet_read(%d, %s, %lu)\n", fd, (char*)buffer, size);
+		printf("[+] error: %s\n", strerror(error));
 	} while (ret < 0 && error == EINTR);
+
+	printf("[-] packet_read() finish\n");
 
 	return ret;
 }
@@ -61,7 +67,11 @@ int packet_write(int socket_fd, const void* buffer, size_t size)
 	do {
 		ret = write(socket_fd, buffer, size);
 		error = errno;
+		printf("\n\n[+] loop packet_write(%d, %s, %lu)\n", socket_fd, (char*)buffer, size);
+		printf("[+] error: %s\n", strerror(error));
 	} while (ret < 0 && error == EINTR);
+
+	printf("[-] packet_write() finish\n");
 
 	return ret;
 }

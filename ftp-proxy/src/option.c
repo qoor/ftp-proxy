@@ -52,7 +52,6 @@ struct option* option_create(int num_threads)
 
 		return NULL;
 	}
-	DBX();
 
 	new_option->thread_pool = new_thread_pool;
 
@@ -66,7 +65,6 @@ struct option* option_create(int num_threads)
 
 		return NULL;
 	}
-	DBX();
 
 	new_option->proxy_socket = new_proxy_socket;
 	ret = setsockopt(new_proxy_socket->fd, SOL_SOCKET, SO_REUSEADDR, &reuse_addr, sizeof(int));
@@ -76,7 +74,6 @@ struct option* option_create(int num_threads)
 
 		return NULL;
 	}
-	DBX();
 	
 	ret = socket_listen(new_proxy_socket, 0);
 	if (ret != SOCKET_SUCCESS)
@@ -85,7 +82,6 @@ struct option* option_create(int num_threads)
 
 		return NULL;
 	}
-	DBX();
 
 	new_epoll = epoll_create(SOMAXCONN);
 	if (new_epoll < 0)
@@ -94,7 +90,6 @@ struct option* option_create(int num_threads)
 
 		return NULL;
 	}
-	DBX();
 
 	new_option->epoll_fd = new_epoll;
 	event.data.fd = new_proxy_socket->fd;
@@ -106,7 +101,6 @@ struct option* option_create(int num_threads)
 
 		return NULL;
 	}
-	DBX();
 
 	proxy_error("option", "Proxy listen socket fd: %d", new_proxy_socket->fd);
 
