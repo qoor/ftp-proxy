@@ -12,7 +12,9 @@
 4. proxy.cfg 설정파일을 열어 다음과 같은 형식으로 FTP 서버를 등록합니다.
 > server_address IPADDRESS:PORT
 5. 방화벽이 실행되고 있다면 방화벽 설정을 해주세요
-6. 빌드된 결과 파일을 실행합니다.
+6. proxy.cfg 파일을 실행파일 위치로 이동합니다  
+> mv proxy.cfg Release/
+7. 빌드된 결과 파일을 실행합니다.
 
 ### 설치전 유의사항
 > CMAKE 3.8 이상 버전이 필요합니다.  
