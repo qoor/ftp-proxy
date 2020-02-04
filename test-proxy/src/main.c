@@ -79,7 +79,7 @@ int main(int argc, const char** argv)
 	global_option = option;
 
 	proxy_error("main", "Proxy start working..");
-
+	
 	ret = thread_pool_add_work(option->thread_pool, (void*)main_loop, option);
 	if (ret != THREAD_SUCCESS)
 	{

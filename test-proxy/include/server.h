@@ -36,9 +36,6 @@ enum server_error_type
 	SERVER_INCORRECT_CONNECTION_STRING,
 	SERVER_SOCKET_CREATE_FAILED,
 	SERVER_NO_SERVERS,
-	SERVER_POLLING_WAIT_ERROR,
-	SERVER_CONNECTION_CLOSED,
-	SERVER_CONNECTION_ERROR,
 	SERVER_INVALID_PARAM
 };
 /* */
@@ -52,6 +49,7 @@ struct sockaddr_in* server_get_available_address(struct list* server_list);
 int server_command_received(struct session* target_session, char* buffer, int received_bytes);
 int server_data_received(struct session* target_session, char* buffer, int received_bytes);
 int server_data_connection_received(struct session* target_session, char* buffer, int received_bytes);
+int server_data_closed(struct server* target_server);
 
 #endif
 

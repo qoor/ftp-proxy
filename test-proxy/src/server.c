@@ -28,7 +28,9 @@ int server_command_received(struct session* target_session, char* buffer, int re
 	{
 		return SERVER_INVALID_PARAM;
 	}
+	
 	send_packet_to_client(target_session->client, buffer, received_bytes, PORT_TYPE_COMMAND);
+
 	return SERVER_SUCCESS;
 }
 
@@ -43,7 +45,9 @@ int server_data_received(struct session* target_session, char* buffer, int recei
 	{
 		return SERVER_INVALID_PARAM;
 	}
+	
 	send_packet_to_client(target_session->client, buffer, received_bytes, PORT_TYPE_DATA);
+
 	return SERVER_SUCCESS;
 }
 
@@ -58,7 +62,9 @@ int server_data_connection_received(struct session* target_session, char* buffer
 	{
 		return SERVER_INVALID_PARAM;
 	}
+	
 	send_packet_to_client(target_session->client, buffer, received_bytes, PORT_TYPE_DATA);
+
 	return SERVER_SUCCESS;
 }
 
@@ -259,7 +265,7 @@ int send_packet_to_server(struct session* target_session, char* buffer, int rece
 
 	if (new_buffer_size > 0)
 	{
-		packet_full_write(socket_fd, buffer, new_buffer_size);
+		packet_write(socket_fd, buffer, new_buffer_size);
 	}
 
 	return SERVER_SUCCESS;
@@ -372,3 +378,22 @@ struct sockaddr_in* server_get_available_address(struct list* server_list)
 	return &current_address->address;
 }
 
+int server_data_closed(struct server* target_server)
+{
+	if (target_server == NULL)
+	{
+		return SERVER_INVALID;
+	}
+
+	if (target_server->connection_socket != NULL)
+	{
+		socket_free(target_server->connection_socket);
+		target_server->connection_socket = NULL;
+	}
+
+	if (target_server->data_socket != NULL)
+	{
+		socket_free(target_server->connection_socket);
+		target_server->connection_socket = NULL;
+	}
+}

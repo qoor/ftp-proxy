@@ -177,6 +177,7 @@ int send_packet_to_client(struct client* target_client, char* buffer, int receiv
 {
 	int socket_fd = -1;
 	int new_buffer_size = received_bytes;
+	int ret = -1;
 
 	if (target_client == NULL)
 	{
@@ -203,7 +204,9 @@ int send_packet_to_client(struct client* target_client, char* buffer, int receiv
 
 	if (new_buffer_size > 0)
 	{
-	packet_full_write(socket_fd, buffer, new_buffer_size);
+		ret = packet_write(socket_fd, buffer, new_buffer_size);
+		log_write("write return: %d", ret);
 	}
+
 	return CLIENT_SUCCESS;
 }

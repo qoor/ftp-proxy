@@ -258,7 +258,7 @@ int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_s
 			return SESSION_SUCCESS;
 		}
 		
-		return SERVER_POLLING_WAIT_ERROR;
+		return SESSION_POLLING_WAIT_ERROR;
 	}
 
 	for (event_id = 0; event_id < active_event_count; ++event_id)
@@ -299,7 +299,7 @@ int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_s
 			}
 
 			ret = session_read_packet(target_session, event_socket);
-			if (ret != SESSION_SUCCESS)
+			if ((ret != SESSION_SUCCESS) && (ret != SESSION_CONNECTION_CLOSED))
 			{
 				/* Error of processing packet */
 				proxy_error("session", "Packet receive error: %d (socket fd: %d)", ret, event_socket);
@@ -329,16 +329,27 @@ int session_read_packet(struct session* target_session, int event_socket)
 	if (received_bytes <= 0)
 	{
 		socket_del_from_epoll(global_option->epoll_fd, event_socket);
-		session_remove_from_list(target_session);
 
 		/* Socket error */
-		if (received_bytes == 0)
+		if ((received_bytes == 0) &&
+			((target_session->server->connection_socket != NULL) && (target_session->server->connection_socket->fd == event_socket)) ||
+			((target_session->server->data_socket != NULL) && (target_session->server->data_socket->fd == event_socket)))
 		{
-			/* If connection closed result is not error */
-			return SERVER_CONNECTION_CLOSED;
+			server_data_closed(target_session->server);
+		}
+		else
+		{
+			session_remove_from_list(target_session);
 		}
 
-		return SERVER_CONNECTION_ERROR;
+		if (received_bytes == 0)
+		{
+			proxy_error("session", "Proxy data listen finished");
+			/* If connection closed result is not error */
+			return SESSION_CONNECTION_CLOSED;
+		}
+
+		return SESSION_CONNECTION_ERROR;
 	}
 
 	port_type = session_get_client_socket_type(event_socket, target_session->client);
