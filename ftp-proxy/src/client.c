@@ -176,7 +176,6 @@ int client_free(struct client* target_client)
 int send_packet_to_client(struct client* target_client, char* buffer, int received_bytes, int port_type)
 {
 	int new_buffer_size = received_bytes;
-	int ret = 0;
 	struct socket* target_socket = NULL;
 
 	if (target_client == NULL)
