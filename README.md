@@ -15,7 +15,7 @@
 6. 빌드된 결과 파일을 실행합니다.
 
 ### 설치전 유의사항
-> CMAKE 3.8 이상 버전이 필요합니다.
+> CMAKE 3.8 이상 버전이 필요합니다.  
 > GCC 4.4 이하 버전에서는 컴파일 옵션을 CmakeLists.txt 를 열어서 [-std=c90 -> -std=gnu89]로 변경하여야 합니다.
 
 ## 사용 방법
@@ -26,7 +26,7 @@
 ## 동작 모습
 > 본 테스트 환경의 FTP SERVER 는 [Xlight FTP Server](https://www.xlightftpd.com) 프로그램을 이용하여 구축하였습니다
 ![PROXY 가 실행중인 주소로 FTP USER를 동시에 접속시도하는 모습입니다.](./image/proxy1.png)
-![부하분산이 적용되어 FTP SERVER 에 유저가 골고루 접속된 모습입니다.](./image/proxy2.png)
+![부하분산이 적용되어 FTP SERVER 에 유저가 골고루 접속된 모습입니다.](./image/proxy2.png)  
 PROXY 가 실행중인 주소로 FTP USER를 동시에 접속시도하니 FTP PROXY 가 부하분산을 하여 FTP SERVER 에 유저가 골고루 접속된 모습입니다.
 
 
