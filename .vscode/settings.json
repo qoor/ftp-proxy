@@ -13,7 +13,6 @@
         "errno.h": "c",
         "thread.h": "c",
         "session.h": "c",
-        "vector.h": "c",
         "socket.h": "c",
         "malloc.h": "c",
         "types.h": "c",
@@ -23,5 +22,4 @@
         "fcntl.h": "c"
     },
     "C_Cpp.default.cStandard": "c89",
-    "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools"
 }

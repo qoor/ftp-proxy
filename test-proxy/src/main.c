@@ -4,12 +4,10 @@
 #include <malloc.h>
 
 #include "client.h"
-#include "hashmap.h"
 #include "server.h"
 #include "log.h"
 #include "option.h"
 #include "socket.h"
-#include "vector.h"
 #include "session.h"
 #include "client.h"
 #include "thread.h"
