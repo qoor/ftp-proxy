@@ -6,7 +6,6 @@
 #include <unistd.h>
 
 #include "client.h"
-#include "vector.h"
 #include "types.h"
 #include "server.h"
 #include "utils.h"
