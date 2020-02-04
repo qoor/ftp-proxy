@@ -3,7 +3,6 @@
 
 #include <pthread.h>
 
-#include "vector.h"
 
 enum thread_error_type
 {
