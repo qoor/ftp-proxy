@@ -196,6 +196,11 @@ struct sockaddr_in *get_address_from_port_command(char *buffer, int received_byt
 	{
 		if (!isdigit((int)*p))
 		{
+			if ((*p == '\r') || (*p == '\n'))
+			{
+				continue;
+			}
+
 			if (p == portstr || *p != '.' || val > 0xFF)
 			{
 				free(addrstr);

@@ -43,17 +43,54 @@ static int socket_set_buffer_size(struct socket* target_socket, size_t buffer_si
 	return SOCKET_SUCCESS;
 }
 
-struct socket* socket_create_by_socket(int domain, int type, int protocol, size_t buffer_size, int socket_fd)
+static int socket_init(struct socket* target_socket, int socket_fd, size_t buffer_size, const struct sockaddr_in* address)
 {
-	struct socket* new_socket = NULL;
-	struct sockaddr_in address = { 0, };
-	uint32_t address_length = sizeof(struct sockaddr_in);
 	int ret = 0;
 
 	if (buffer_size <= 0)
 	{
 		buffer_size = DEFAULT_BUFFER_SIZE;
 	}
+
+	target_socket->fd = socket_fd;
+	ret = socket_set_buffer_size(target_socket, buffer_size);
+	if (ret != SOCKET_SUCCESS)
+	{
+		socket_free(target_socket);
+
+		return SOCKET_ALLOC_FAILED;
+	}
+
+	target_socket->buffer_size = buffer_size;
+	target_socket->buffer = (char*)malloc(buffer_size);
+	if (target_socket->buffer == NULL)
+	{
+		socket_free(target_socket);
+
+		return SOCKET_ALLOC_FAILED;
+	}
+
+	ret = socket_set_nonblock_mode(target_socket->fd);
+	if (ret != SOCKET_SUCCESS)
+	{
+		socket_free(target_socket);
+
+		return SOCKET_FLAG_CONTROL_FAILED;
+	}
+
+	target_socket->address.sin_addr = address->sin_addr;
+	target_socket->address.sin_port = address->sin_port;
+	target_socket->address.sin_family = AF_INET;
+
+	return SOCKET_SUCCESS;
+}
+
+struct socket* socket_create_by_socket(int socket_fd, size_t buffer_size)
+{
+	struct socket* new_socket = NULL;
+	struct sockaddr_in address = { 0, };
+	uint32_t address_length = sizeof(struct sockaddr_in);
+	int ret = 0;
 
 	if (socket_fd == -1)
 	{
@@ -67,18 +104,9 @@ struct socket* socket_create_by_socket(int domain, int type, int protocol, size_
 	}
 
 	memset(new_socket, 0x00, sizeof(struct socket));
-	new_socket->buffer = (char*)malloc(buffer_size);
-	if (new_socket->buffer == NULL)
-	{
-		free(new_socket);
-		
-		return NULL;
-	}
 
-	new_socket->buffer_size = buffer_size;
-
-	new_socket->fd = socket_fd;
-	ret = socket_set_buffer_size(new_socket, buffer_size);
+	getsockname(socket_fd, (struct sockaddr*)&address, &address_length);
+	ret = socket_init(new_socket, socket_fd, buffer_size, &address);
 	if (ret != SOCKET_SUCCESS)
 	{
 		socket_free(new_socket);
@@ -86,25 +114,14 @@ struct socket* socket_create_by_socket(int domain, int type, int protocol, size_
 		return NULL;
 	}
 
-	getsockname(socket_fd, (struct sockaddr*)&address, &address_length);
-	new_socket->address.sin_addr = address.sin_addr;
-	new_socket->address.sin_port = address.sin_port;
-	new_socket->address.sin_family = AF_INET;
-
 	return new_socket;
 }
 
 struct socket* socket_create(int domain, int type, int protocol, size_t buffer_size, const struct sockaddr_in* address)
 {
 	struct socket* new_socket = NULL;
+	int socket_fd = -1;
 	int ret = 0;
-
-	errno = 0;
-	
-	if (buffer_size <= 0)
-	{
-		buffer_size = DEFAULT_BUFFER_SIZE;
-	}
 
 	if (address == NULL)
 	{
@@ -122,40 +139,23 @@ struct socket* socket_create(int domain, int type, int protocol, size_t buffer_s
 	}
 
 	memset(new_socket, 0x00, sizeof(struct socket));
-	new_socket->buffer = (char*)malloc(buffer_size);
-	if (new_socket->buffer == NULL)
+
+	socket_fd = socket(domain, type, protocol);
+	if (socket_fd < 0)
 	{
 		free(new_socket);
-		errno = SOCKET_ALLOC_FAILED;
-
-		return NULL;
-	}
-
-	new_socket->buffer_size = buffer_size;
-
-	new_socket->fd = socket(domain, type, protocol);
-	if (new_socket->fd < 0)
-	{
-		socket_free(new_socket);
 		errno = SOCKET_OPEN_SOCKET_FAILED;
 
 		return NULL;
 	}
 
-	ret = socket_set_buffer_size(new_socket, buffer_size);
+	ret = socket_init(new_socket, socket_fd, buffer_size, address);
 	if (ret != SOCKET_SUCCESS)
 	{
 		socket_free(new_socket);
-		errno = SOCKET_OPTION_FAILED;
 
 		return NULL;
 	}
-
-	new_socket->address.sin_addr = address->sin_addr;
-	new_socket->address.sin_family = address->sin_family;
-	new_socket->address.sin_port = address->sin_port;
-
-	socket_set_nonblock_mode(new_socket->fd);
 
 	return new_socket;
 }

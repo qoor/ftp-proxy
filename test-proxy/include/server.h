@@ -45,7 +45,7 @@ enum server_error_type
 struct server* server_create(const struct sockaddr_in* address);
 int server_free(struct server* target_server);
 int send_packet_to_server(struct session* target_session, char* buffer, int received_bytes, int port_type);
-int server_accept(struct server* target_server, struct sockaddr_in* client_address);
+struct socket* server_accept(struct server* target_server, struct sockaddr_in* client_address);
 int server_insert_address(struct list* server_list, char* address);
 struct sockaddr_in* server_get_available_address(struct list* server_list);
 int server_command_received(struct session* target_session, char* buffer, int received_bytes);

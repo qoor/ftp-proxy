@@ -129,7 +129,7 @@ struct client* client_create(struct session* parent_session, int connected_socke
 
 	memset(new_client, 0x00, sizeof(struct client));
 
-	new_command_socket = socket_create_by_socket(PF_INET, SOCK_STREAM, IPPROTO_TCP, COMMAND_BUFFER_SIZE, connected_socket);
+	new_command_socket = socket_create_by_socket(connected_socket, COMMAND_BUFFER_SIZE);
 	if (new_command_socket == NULL)
 	{
 		client_free(new_client);

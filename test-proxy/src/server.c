@@ -233,7 +233,7 @@ int send_packet_to_server(struct session* target_session, char* buffer, int rece
 		if (data_listen_socket != NULL)
 		{
 			new_buffer_size = generate_port_command(data_listen_socket->fd, buffer);
-			proxy_error("server", "%s", buffer);
+			proxy_error("server", "Proxy data listen port: %s", buffer);
 		}
 	}
 
@@ -249,33 +249,43 @@ int send_packet_to_server(struct session* target_session, char* buffer, int rece
  * Accept connection from FTP server to proxy data port
  * This function return value of  socket file descriptor
 */
-int server_accept(struct server* target_server, struct sockaddr_in* client_address)
+struct socket* server_accept(struct server* target_server, struct sockaddr_in* client_address)
 {
-	int client_socket = -1;
+	int new_socket_fd = -1;
 	static unsigned int client_address_length = sizeof(struct sockaddr);
+	struct socket* new_socket = NULL;
 	char* client_address_str = NULL;
+	int ret = 0;
 
 	if (target_server == NULL || client_address == NULL)
 	{
-		return -1;
+		return NULL;
 	}
 	
-	client_socket = accept(target_server->data_socket->fd, (struct sockaddr*)client_address, &client_address_length);
-	if ((client_socket < 0) && (errno != EINPROGRESS))
+	new_socket_fd = accept(target_server->data_socket->fd, (struct sockaddr*)client_address, &client_address_length);
+	if ((new_socket_fd < 0) && (errno != EINPROGRESS))
 	{
-		return -1;
+		return NULL;
 	}
 
-	if (socket_set_nonblock_mode(client_socket) != SOCKET_SUCCESS)
+	new_socket = socket_create_by_socket(new_socket_fd, DATA_BUFFER_SIZE);
+	if (new_socket == NULL)
 	{
-		return -1;
+		return NULL;
 	}
+
+	ret = socket_add_to_epoll(global_option->epoll_fd, new_socket->fd);
+	if (ret != SOCKET_SUCCESS)
+	{
+		return NULL;
+	}
+
+	target_server->data_socket = new_socket;
 
 	client_address_str = inet_ntoa(client_address->sin_addr);
 	proxy_error("server", "Data port connection accepted [Address: %s:%d]", client_address_str, ntohs(client_address->sin_port));
-	free(client_address_str);
 
-	return client_socket;
+	return new_socket;
 }
 
 int server_insert_address(struct list* server_list, char* address)

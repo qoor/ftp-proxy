@@ -242,6 +242,8 @@ int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_s
 	int event_id = 0;
 	int event_socket = -1;
 	struct session* target_session = NULL;
+	struct sockaddr_in data_client_address = { 0, };
+	struct socket* data_client_socket = NULL;
 	int ret = 0;
 
 	active_event_count = epoll_wait(epoll_fd, events, MAX_EVENTS, -1);
@@ -274,9 +276,20 @@ int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_s
 			target_session = get_session_from_list(session_list, event_socket);
 			if (target_session == NULL)
 			{
-				/* proxy_error("session", "Unknown socket fd: %d", event_socket); */
+				proxy_error("session", "Unknown socket fd: %d", event_socket);
 				
 				continue;
+			}
+
+			if ((target_session->server->data_socket != NULL) &&
+				(event_socket == target_session->server->data_socket->fd))
+			{
+				/* Data socket connection */
+				data_client_socket = server_accept(target_session->server, &data_client_address);
+				if (data_client_socket == NULL)
+				{
+					continue;
+				}
 			}
 
 			ret = session_read_packet(target_session, event_socket);
@@ -285,7 +298,7 @@ int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_s
 				/* Error of processing packet */
 				proxy_error("session", "Packet receive error: %d (socket fd: %d)", ret, event_socket);
 
-				continue;
+				break;
 			}
 		}
 	}
@@ -298,6 +311,7 @@ int session_read_packet(struct session* target_session, int event_socket)
 	int received_bytes = 0;
 	static char buffer[COMMAND_BUFFER_SIZE] = { 0, };
 	int port_type = 0;
+	int from = 0;
 
 	if ((target_session == NULL) || (event_socket < 0))
 	{
@@ -321,15 +335,16 @@ int session_read_packet(struct session* target_session, int event_socket)
 		return SERVER_CONNECTION_ERROR;
 	}
 
-	proxy_error("session", "%s", buffer);
-
 	port_type = session_get_client_socket_type(event_socket, target_session->client);
+
 	if (port_type == PORT_TYPE_COMMAND)
 	{
+		from = FROM_CLIENT;
 		client_command_received(target_session, buffer, received_bytes);
 	}
 	else if (port_type == PORT_TYPE_DATA)
 	{
+		from = FROM_CLIENT;
 		client_data_received(target_session, buffer, received_bytes);
 	}
 	else
@@ -337,16 +352,27 @@ int session_read_packet(struct session* target_session, int event_socket)
 		port_type = session_get_server_socket_type(event_socket, target_session->server);
 		if (port_type == PORT_TYPE_COMMAND)
 		{
+			from = FROM_SERVER;
 			server_command_received(target_session, buffer, received_bytes);
 		}
 		else if (port_type == PORT_TYPE_DATA)
 		{
+			from = FROM_SERVER;
 			server_data_received(target_session, buffer, received_bytes);
 		}
 		else
 		{
 			return SESSION_INVALID_SOCKET;
 		}
+	}
+
+	if (from == FROM_CLIENT)
+	{
+		proxy_error("session", "[client] %s", buffer);
+	}
+	else
+	{
+		proxy_error("session", "[server] %s", buffer);
 	}
 
 	return SESSION_SUCCESS;
