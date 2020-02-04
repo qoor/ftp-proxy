@@ -24,6 +24,7 @@ struct socket
 	int fd;
 	char* buffer;
 	size_t buffer_size;
+	size_t buffer_used;
 	struct sockaddr_in address;
 };
 

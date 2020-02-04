@@ -51,6 +51,7 @@ int session_remove_from_list(struct session* target_session);
 struct session* get_session_from_list(const struct list* session_list, int socket_fd);
 int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_socket, struct epoll_event* events);
 int session_read_packet(struct session* target_session, int event_socket);
+int session_buffer_write(struct socket* target_socket, char* buffer, size_t buffer_size);
 
 #endif
 

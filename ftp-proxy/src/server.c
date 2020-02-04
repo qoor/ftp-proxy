@@ -218,6 +218,7 @@ int send_packet_to_server(struct session* target_session, char* buffer, int rece
 	int new_buffer_size = received_bytes;
 	struct server* target_server = NULL;
 	struct socket* data_listen_socket = NULL;
+	struct socket* target_socket = NULL;
 
 	if (target_session == NULL)
 	{
@@ -237,15 +238,15 @@ int send_packet_to_server(struct session* target_session, char* buffer, int rece
 	
 	if (port_type == PORT_TYPE_COMMAND)
 	{
-		socket_fd = target_server->command_socket->fd;
+		target_socket = target_server->command_socket;
 	}
 	else if (port_type == PORT_TYPE_DATA)
 	{
-		socket_fd = target_server->data_socket->fd;
+		target_socket = target_server->data_socket;
 	}
 	else if (port_type == PORT_TYPE_DATA_CONNECTION)
 	{
-		socket_fd = target_server->connection_socket->fd;
+		target_socket = target_server->connection_socket;
 	}
 	else
 	{
@@ -265,7 +266,7 @@ int send_packet_to_server(struct session* target_session, char* buffer, int rece
 
 	if (new_buffer_size > 0)
 	{
-		packet_write(socket_fd, buffer, new_buffer_size);
+		session_buffer_write(target_socket, buffer, new_buffer_size);
 	}
 
 	return SERVER_SUCCESS;

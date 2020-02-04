@@ -61,14 +61,17 @@ static int socket_init(struct socket* target_socket, int socket_fd, size_t buffe
 		return SOCKET_ALLOC_FAILED;
 	}
 
+	target_socket->buffer_used = 0;
 	target_socket->buffer_size = buffer_size;
-	target_socket->buffer = (char*)malloc(buffer_size);
+	target_socket->buffer = (char*)malloc(buffer_size * sizeof(char));
 	if (target_socket->buffer == NULL)
 	{
 		socket_free(target_socket);
 
 		return SOCKET_ALLOC_FAILED;
 	}
+
+	memset(target_socket->buffer, 0x00, buffer_size * sizeof(char));
 
 	ret = socket_set_nonblock_mode(target_socket->fd);
 	if (ret != SOCKET_SUCCESS)
@@ -262,7 +265,7 @@ int socket_add_to_epoll(int epoll_fd, int socket_fd)
 	struct epoll_event event = { 0, };
 	int ret = 0;
 
-	event.events = EPOLLIN;
+	event.events = EPOLLIN | EPOLLOUT;
 	event.data.fd = socket_fd;
 
 	if ((epoll_fd == -1) || (socket_fd == -1))

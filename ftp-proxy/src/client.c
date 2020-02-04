@@ -178,6 +178,9 @@ int send_packet_to_client(struct client* target_client, char* buffer, int receiv
 	int socket_fd = -1;
 	int new_buffer_size = received_bytes;
 	int ret = -1;
+	int error = 0;
+	size_t error_size = sizeof(int);
+	struct socket* target_socket = NULL;
 
 	if (target_client == NULL)
 	{
@@ -191,21 +194,33 @@ int send_packet_to_client(struct client* target_client, char* buffer, int receiv
 
 	if (port_type == PORT_TYPE_COMMAND)
 	{
-		socket_fd = target_client->command_socket->fd;
+		target_socket = target_client->command_socket;
 	}
 	else if (port_type == PORT_TYPE_DATA)
 	{
-		socket_fd = target_client->data_socket->fd;
+		target_socket = target_client->data_socket;
 	}
 	else
 	{
 		return CLIENT_INVALID_PARAM;
 	}
 
+	ret = setsockopt(target_socket->fd, SOL_SOCKET, SO_ERROR, &error, &error_size);
+	if (ret < 0)
+	{
+		printf("Getting socket option failed. Msg: %s\n", strerror(ret));
+	}
+
+	if (error != 0)
+	{
+		printf("Socket error! Msg: %s\n", strerror(error));
+	}
+
+	printf("buffer: [%s], buffer_size: [%d]\n", buffer, new_buffer_size);
 	if (new_buffer_size > 0)
 	{
-		ret = packet_write(socket_fd, buffer, new_buffer_size);
-		log_write("write return: %d", ret);
+		ret = session_buffer_write(target_socket, buffer, new_buffer_size);
+		printf("write return: [%d], socket_fd: [%d]\n", ret);
 	}
 
 	return CLIENT_SUCCESS;
