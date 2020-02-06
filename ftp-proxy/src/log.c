@@ -5,10 +5,9 @@
 #include <time.h>
 #include <malloc.h>
 #include <string.h>
-
-#include <sys/timeb.h>
 #include <pthread.h>
 
+#include <sys/timeb.h>
 
 static FILE* log_file = NULL;
 /* Used to buffer length check to prevent buffer overflow */
@@ -66,6 +65,7 @@ int log_write(const char* message, ...)
 	va_list args;
 	size_t buffer_length = 0;
 	const char* log_format = LOG_TIMESTAMP_PRINT_KOREAN;
+	int ret = 0;
 
 	if (message == NULL)
 	{
@@ -77,52 +77,57 @@ int log_write(const char* message, ...)
 		return LOG_WRITE_NO_HANDLE;
 	}
 
-	if (ftime(&time_buffer) == -1) /* If failed to get time */
+	ret = ftime(&time_buffer);
+	if (ret == -1)
 	{
 		return LOG_WRITE_TIME_GET_FAILED;
 	}
 	time = time_buffer.time;
 	local_time = localtime(&time);
 
-
-	/* 
-	 * Write log
-	 * Ex) [2020-01-17 13:46:00.000] Hello World!
-	*/
-	fprintf(log_file,  log_format, local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
+	pthread_mutex_lock(&logfile_mutex);
+	/* Checking timestamp length */
+	buffer_length = fprintf(log_message_size_check_file, log_format, local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
 		local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm);
 	/* */
-
-	/* Also buffer length check with arguments */
+	
+	/* Checking message with va_args length */
 	va_start(args, message);
-	buffer_length = vfprintf(log_message_size_check_file, message, args);
+	buffer_length += vfprintf(log_message_size_check_file, message, args);
 	va_end(args);
-	if (buffer_length >= MAX_LOG_MESSAGE_SIZE)
+	/* */
+
+	buffer_length += strlen(" ") + strlen("\n"); /* One space between timestamp and message, New line */
+
+	if (buffer_length < 0 || buffer_length >= MAX_LOG_MESSAGE_SIZE)
 	{
 		memset(log_buffer, 0x00, MAX_LOG_MESSAGE_SIZE);
 		pthread_mutex_unlock(&logfile_mutex);
 		return LOG_WRITE_INVALID_MESSAGE;
 	}
+
+	/* First, logging timestamp */
+	buffer_length = sprintf(log_buffer, log_format, local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
+		local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm);
+
+	strncat(log_buffer, " ", strlen(" "));
+	buffer_length += strlen(" ");
 	/* */
 
-	pthread_mutex_lock(&logfile_mutex);
-	/* Argument push to buffer */
+	/* Second, logging message with va_args */
 	va_start(args, message);
-	buffer_length = vfprintf(log_file, message, args);
+	vsprintf(log_buffer + buffer_length, message, args);
 	va_end(args);
 	/* */
 
-	if (buffer_length < 0)
-	{
-		memset(log_buffer, 0x00, MAX_LOG_MESSAGE_SIZE);
-		pthread_mutex_unlock(&logfile_mutex);
-		return LOG_WRITE_INVALID_MESSAGE;
-	}
-	else if (buffer_length >= MAX_LOG_MESSAGE_SIZE)
-	{
-		fwrite("\n", sizeof(char), 1, log_file);
-	}
+	/* Last, logging new line */
+	strncat(log_buffer, "\n", strlen("\n"));
+	/* */
 
+	/* Now write buffer to log file */
+	fwrite(log_buffer, sizeof(char), strlen(log_buffer), log_file);
+	fflush(log_file);
+	/* */
 	pthread_mutex_unlock(&logfile_mutex);
 
 	return LOG_WRITE_SUCCESS;

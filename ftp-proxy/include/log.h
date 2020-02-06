@@ -7,7 +7,7 @@
 
 #define MAX_LOG_MESSAGE_SIZE	(1024)
 
-#define LOG_TIMESTAMP_PRINT_KOREAN ("[%04d-%02d-%02d %02d:%02d:%02d.%03d] %s")
+#define LOG_TIMESTAMP_PRINT_KOREAN ("[%04d-%02d-%02d %02d:%02d:%02d.%03d]")
 
 /* LOG RETURN CODE DEFINE*/
 enum log_init_error_type
