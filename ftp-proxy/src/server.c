@@ -120,7 +120,6 @@ static struct socket* server_listen(struct server* target_server, uint32_t net_h
 static struct socket* server_connect(struct server* target_server)
 {
 	struct socket* new_socket = NULL;
-	char* server_address = NULL;
 	int ret = 0;
 
 	if (target_server == NULL)
@@ -149,11 +148,6 @@ static struct socket* server_connect(struct server* target_server)
 
 		return NULL;
 	}
-	
-	target_server->command_socket = new_socket;
-
-	server_address = inet_ntoa(target_server->address.sin_addr);
-	proxy_error("server", "Connected to [%s:%d] socket fd: %d", server_address, ntohs(target_server->address.sin_port), new_socket->fd);
 
 	return new_socket;
 }
@@ -162,6 +156,7 @@ struct server* server_create(const struct sockaddr_in* address)
 {
 	struct server* new_server = NULL;
 	struct socket* new_command_socket = NULL;
+	char* server_address = NULL;
 	int ret = 0;
 
 	new_server = (struct server*)malloc(sizeof(struct server));
@@ -183,6 +178,10 @@ struct server* server_create(const struct sockaddr_in* address)
 	}
 
 	new_server->command_socket = new_command_socket;
+
+	server_address = inet_ntoa(new_server->address.sin_addr);
+	proxy_error("server", "Connected to [%s:%d] socket fd: %d", server_address, ntohs(new_server->address.sin_port), new_command_socket->fd);
+
 	ret = socket_add_to_epoll(global_option->epoll_fd, new_command_socket->fd);
 	if (ret != SOCKET_SUCCESS)
 	{

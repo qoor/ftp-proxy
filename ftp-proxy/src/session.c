@@ -400,14 +400,14 @@ int session_read_packet(struct session* target_session, int event_socket)
 
 	memset(buffer, 0x00, sizeof(buffer));
 	received_bytes = packet_read(event_socket, buffer, sizeof(buffer));
+	port_type = session_get_server_socket_type(event_socket, target_session->server);
 	if (received_bytes <= 0)
 	{
 		socket_del_from_epoll(global_option->epoll_fd, event_socket);
 
 		/* Socket error */
-		if ((received_bytes == 0) &&
-			(((target_session->server->connection_socket != NULL) && (target_session->server->connection_socket->fd == event_socket)) ||
-			((target_session->server->data_socket != NULL) && (target_session->server->data_socket->fd == event_socket))))
+		if ((received_bytes == 0) && 
+			((port_type == PORT_TYPE_DATA) || (port_type == PORT_TYPE_DATA_CONNECTION)))
 		{
 			server_data_closed(target_session->server);
 		}
@@ -426,32 +426,28 @@ int session_read_packet(struct session* target_session, int event_socket)
 		return SESSION_CONNECTION_ERROR;
 	}
 
-	port_type = session_get_client_socket_type(event_socket, target_session->client);
-
-	proxy_error("1111 session", "%s", buffer);
-
 	if (port_type == PORT_TYPE_COMMAND)
 	{
-		client_command_received(target_session, buffer, received_bytes);
+		server_command_received(target_session, buffer, received_bytes);
 	}
 	else if (port_type == PORT_TYPE_DATA)
 	{
-		client_data_received(target_session, buffer, received_bytes);
+		server_data_received(target_session, buffer, received_bytes);
+	}
+	else if (port_type == PORT_TYPE_DATA_CONNECTION)
+	{
+		server_data_connection_received(target_session, buffer, received_bytes);
 	}
 	else
 	{
-		port_type = session_get_server_socket_type(event_socket, target_session->server);
+		port_type = session_get_client_socket_type(event_socket, target_session->client);
 		if (port_type == PORT_TYPE_COMMAND)
 		{
-			server_command_received(target_session, buffer, received_bytes);
+			client_command_received(target_session, buffer, received_bytes);
 		}
 		else if (port_type == PORT_TYPE_DATA)
 		{
-			server_data_received(target_session, buffer, received_bytes);
-		}
-		else if (port_type == PORT_TYPE_DATA_CONNECTION)
-		{
-			server_data_connection_received(target_session, buffer, received_bytes);
+			client_data_received(target_session, buffer, received_bytes);
 		}
 		else
 		{
@@ -493,3 +489,4 @@ int session_buffer_write(struct socket* target_socket, char* buffer, size_t buff
 
 	return SESSION_SUCCESS;
 }
+
