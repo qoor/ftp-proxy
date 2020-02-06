@@ -141,6 +141,14 @@ static struct socket* server_connect(struct server* target_server)
 
 		return NULL;
 	}
+
+	ret = socket_add_to_epoll(global_option->epoll_fd, new_socket->fd);
+	if (ret != SOCKET_SUCCESS)
+	{
+		socket_free(new_socket);
+
+		return NULL;
+	}
 	
 	target_server->command_socket = new_socket;
 

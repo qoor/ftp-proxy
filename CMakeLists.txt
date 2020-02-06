@@ -9,23 +9,24 @@ SET ( PROJECT_VERSION_MINOR 01 )
 # 빌드 형상(Configuration) 및 주절주절 Makefile 생성 여부
 SET ( CMAKE_BUILD_TYPE Release )
 SET ( CMAKE_VERBOSE_MAKEFILE false )
+SET ( CMAKE_EXPORT_COMPILE_COMMANDS true )
  
 # 빌드 대상 바이너리 파일명 및 소스파일 목록
 SET ( OUTPUT_ELF
-        "${CMAKE_PROJECT_NAME}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.out"
-        )
+    "${CMAKE_PROJECT_NAME}-${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.out"
+)
 SET ( SRC_FILES
-        ftp-proxy/src/main.c
-        ftp-proxy/src/option.c
-        ftp-proxy/src/server.c
-        ftp-proxy/src/log.c
-        ftp-proxy/src/socket.c
-        ftp-proxy/src/client.c
-        ftp-proxy/src/session.c
-        ftp-proxy/src/thread.c
-        ftp-proxy/src/packet.c
-        ftp-proxy/src/utils.c
-        )
+	ftp-proxy/src/main.c
+	ftp-proxy/src/option.c
+	ftp-proxy/src/server.c
+	ftp-proxy/src/log.c
+	ftp-proxy/src/socket.c
+	ftp-proxy/src/client.c
+	ftp-proxy/src/session.c
+	ftp-proxy/src/thread.c
+	ftp-proxy/src/packet.c
+	ftp-proxy/src/utils.c
+)
  
 # 공통 컴파일러
 SET ( CMAKE_C_COMPILER "gcc" )
