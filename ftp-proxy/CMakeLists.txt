@@ -1,5 +1,14 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
+# ftp-proxy binary version
+set (PROJECT_VERSION_MAJOR 1)
+set (PROJECT_VERSION_MINOR 01)
+
+# Binary name
+set (BINARY_NAME
+	${CMAKE_PROJECT_NAME}-${PROJECT_VERSION_MAJOR}-${PROJECT_VERSION_MINOR}.out)
+
+# Source files
 set (SOURCE_FILE
 	"src/main.c"
 	"src/option.c"
@@ -24,8 +33,16 @@ set (SOURCE_FILE
 	"include/utils.h"
 )
 
-add_executable (test-proxy ${SOURCE_FILE})
+# Register the executable binary
+add_executable (${BINARY_NAME} ${SOURCE_FILE})
 
-target_include_directories (test-proxy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries (test-proxy pthread)
+# Include path of headers directory
+target_include_directories (${BINARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+# Link libraries
+target_link_libraries (${BINARY_NAME} pthread)
+
+# Set compile options
+target_compile_options (${BINARY_NAME} PUBLIC
+	-pedantic -Wall -Wextra -Werror -std=c90)
 
