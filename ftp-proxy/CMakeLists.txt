@@ -44,5 +44,5 @@ target_link_libraries (${BINARY_NAME} pthread)
 
 # Set compile options
 target_compile_options (${BINARY_NAME} PUBLIC
-	-Wall -Wextra -Werror -std=c90)
+	-g -Wall -Wextra -Werror -std=c90)
 
