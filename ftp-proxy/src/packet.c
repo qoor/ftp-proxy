@@ -42,7 +42,7 @@ int packet_full_read(int socket_fd, void* buffer, size_t size)
 			return read_size;
 		}
 
-		if (ret > size)
+		if (ret > (int)size)
 		{
 			/* Overflow */
 			return ret;
@@ -93,7 +93,7 @@ int packet_full_write(int socket_fd, const void* buffer, size_t size)
 			return written_size;
 		}
 
-		if (ret > size)
+		if (ret > (int)size)
 		{
 			/* Overflow */
 			return ret;

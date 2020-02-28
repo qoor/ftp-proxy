@@ -155,7 +155,7 @@ int option_free(struct option* target_option)
 
 int get_options(struct option* dest, int argc, const char** argv)
 {
-	if (get_option_from_argument(dest, argc, argv) != ARGUMENT_NOT_FOUND)
+	if (get_option_from_argument(argc, argv) != ARGUMENT_NOT_FOUND)
 	{
 		return OPTION_GET_ARGS_PARSE_ERROR;
 	}
@@ -176,7 +176,7 @@ int get_options(struct option* dest, int argc, const char** argv)
  *  1: fail
  *  2: No sub argument
 */
-int get_option_from_argument(struct option* dest, int argc, const char** argv)
+int get_option_from_argument(int argc, const char** argv)
 {
 	int option_index = 0;
 	if (argc > 3)

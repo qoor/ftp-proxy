@@ -63,7 +63,7 @@ int log_write(const char* message, ...)
 	time_t time = 0;
 	struct tm* local_time = NULL;
 	va_list args;
-	size_t buffer_length = 0;
+	int buffer_length = 0;
 	const char* log_format = LOG_TIMESTAMP_PRINT_KOREAN;
 	int ret = 0;
 
@@ -110,7 +110,7 @@ int log_write(const char* message, ...)
 	buffer_length = sprintf(log_buffer, log_format, local_time->tm_year, local_time->tm_mon, local_time->tm_mday,
 		local_time->tm_hour, local_time->tm_min, local_time->tm_sec, time_buffer.millitm);
 
-	strncat(log_buffer, " ", strlen(" "));
+	strcat(log_buffer, " ");
 	buffer_length += strlen(" ");
 	/* */
 
@@ -121,7 +121,7 @@ int log_write(const char* message, ...)
 	/* */
 
 	/* Last, logging new line */
-	strncat(log_buffer, "\n", strlen("\n"));
+	strcat(log_buffer, "\n");
 	/* */
 
 	/* Now write buffer to log file */

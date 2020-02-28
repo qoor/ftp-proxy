@@ -181,7 +181,7 @@ static int is_socket_in_session(const struct session* source_session, int socket
 	return FALSE;
 }
 
-static struct session* add_session_to_list(struct list* session_list, int epoll_fd, int event_socket)
+static struct session* add_session_to_list(struct list* session_list, int event_socket)
 {
 	struct session* new_session = NULL;
 	struct client* new_client = NULL;
@@ -224,7 +224,7 @@ static struct session* add_session_to_list(struct list* session_list, int epoll_
 		return NULL;
 	}
 
-	new_client = client_create(new_session, connected_socket);
+	new_client = client_create(connected_socket);
 	if (new_client == NULL)
 	{
 		session_remove_from_list(new_session);
@@ -333,7 +333,7 @@ int session_polling(int epoll_fd, struct list* session_list, int proxy_connect_s
 		event_socket = events[event_id].data.fd;
 		if (event_socket == proxy_connect_socket)
 		{
-			target_session = add_session_to_list(session_list, epoll_fd, event_socket);
+			target_session = add_session_to_list(session_list, event_socket);
 			if (target_session == NULL)
 			{
 				proxy_error("session", "Session of socket fd %d create failed", event_socket);

@@ -2,6 +2,6 @@
 **/cmake_install.cmake
 **/CMakeFiles/
 **/Makefile
-**/.vs
-**/.clangd
+**/.vs/
+**/.clangd/
 

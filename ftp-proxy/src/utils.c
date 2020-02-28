@@ -119,12 +119,12 @@ int generate_port_command(int socket_fd, char *destination)
 	}
 
 	strncpy(destination, "PORT ", 5 + 1); /* Include NULL */
-	strncat(destination, address_str, strlen(address_str));
-	strncat(destination, ",", strlen(","));
+	strcat(destination, address_str);
+	strcat(destination, ",");
 
 	sprintf(port_str, "%d,%d", (port / 256), (port % 256));
-	strncat(destination, port_str, strlen(port_str));
-	strncat(destination, "\n", strlen("\n"));
+	strcat(destination, port_str);
+	strcat(destination, "\n");
 
 	return strlen(destination);
 }

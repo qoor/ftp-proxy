@@ -115,7 +115,7 @@ int client_data_received(struct session* target_session, char* buffer, int recei
 	return CLIENT_SUCCESS;
 }
 
-struct client* client_create(struct session* parent_session, int connected_socket)
+struct client* client_create(int connected_socket)
 {
 	struct client* new_client = NULL;
 	struct socket* new_command_socket = NULL;

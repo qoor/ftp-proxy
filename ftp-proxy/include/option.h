@@ -41,7 +41,7 @@ enum get_argument_error_type
 struct option* option_create(int num_threads);
 int option_free(struct option* target_option);
 int get_options(struct option* dest, int argc, const char** argv);
-int get_option_from_argument(struct option* dest, int argc, const char** argv);
+int get_option_from_argument(int argc, const char** argv);
 int get_option_from_file(struct option* dest);
 
 int create_option_file(void);
