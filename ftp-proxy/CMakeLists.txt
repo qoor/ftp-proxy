@@ -37,7 +37,7 @@ set (SOURCE_FILE
 add_executable (${BINARY_NAME} ${SOURCE_FILE})
 
 # Include path of headers directory
-target_include_directories (${BINARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories (${BINARY_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 # Link libraries
 target_link_libraries (${BINARY_NAME} pthread)

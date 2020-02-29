@@ -6,22 +6,22 @@
 쉽게 생각하시면 HA-PROXY와 비슷한 기능을 합니다.
 
 ## 설치하기
-1. Git Clone https://github.com/zndn1997/test-proxy.git
-2. cmake CMakeList.txt
-3. make
-4. proxy.cfg 설정파일을 열어 다음과 같은 형식으로 FTP 서버를 등록합니다.
-> server_address IPADDRESS:PORT
+1. `git clone https://github.com/zndn1997/test-proxy.git`
+2. `cmake -DCMAKE_BUILD_TYPE=<build_type> ./` (`<build_type>`에는 Debug, Release 등이 있음.)
+3. `cmake --build ./`
+4. `proxy.cfg` 설정파일을 열어 다음과 같은 형식으로 FTP 서버를 등록합니다.
+> `server_address IPADDRESS:PORT`
 5. 방화벽이 실행되고 있다면 방화벽 설정을 해주세요
-6. proxy.cfg 파일을 실행파일 위치로 이동합니다  
-> mv proxy.cfg Release/
+6. `proxy.cfg` 파일을 실행파일 위치로 이동합니다  
+> `mv proxy.cfg Release/`
 7. 빌드된 결과 파일을 실행합니다.
 
 ### 설치전 유의사항
-> CMAKE 3.8 이상 버전이 필요합니다.  
-> GCC 4.4 이하 버전에서는 컴파일 옵션을 CmakeLists.txt 를 열어서 [-std=c90 -> -std=gnu89]로 변경하여야 합니다.
+> CMAKE 3.8 이상 버전이 필요합니다.
+> GCC 4.4 이하 버전에서는 `ftp-proxy/CMakeLists.txt`에서 `target_compile_options`의 `-std`값을 [`-std=c90` -> `-std=gnu89`]로 변경하여야 합니다.
 
 ## 사용 방법
-1. proxy.cfg 에 FTP 서버를 등록합니다.
+1. `proxy.cfg` 에 FTP 서버를 등록합니다.
 > 이때 FTP 서버의 인증정보 및 데이타 서버는 모두 동일해야합니다.
 2. proxy를 실행중인 서버의 주소:21 번 으로 FTP 접속을 합니다.
 
